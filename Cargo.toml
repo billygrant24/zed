@@ -1,25 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/acp_thread",
-    "crates/acp_tools",
-    "crates/action_log",
     "crates/activity_indicator",
-    "crates/agent",
-    "crates/agent_servers",
-    "crates/agent_settings",
-    "crates/agent_skills",
-    "crates/agent_ui",
-    "crates/ai_onboarding",
-    "crates/anthropic",
     "crates/askpass",
     "crates/assets",
     "crates/audio",
     "crates/auto_update",
     "crates/auto_update_helper",
     "crates/auto_update_ui",
-    "crates/aws_http_client",
-    "crates/bedrock",
     "crates/benchmarks",
     "crates/breadcrumbs",
     "crates/buffer_diff",
@@ -28,10 +16,7 @@ members = [
     "crates/cli",
     "crates/client",
     "crates/clock",
-    "crates/cloud_api_client",
     "crates/cloud_api_types",
-    "crates/cloud_llm_client",
-    "crates/codestral",
     "crates/collab",
     "crates/collab_ui",
     "crates/collections",
@@ -39,9 +24,6 @@ members = [
     "crates/command_palette_hooks",
     "crates/component",
     "crates/component_preview",
-    "crates/context_server",
-    "crates/copilot",
-    "crates/copilot_chat",
     "crates/crashes",
     "crates/credentials_provider",
     "crates/csv_preview",
@@ -51,23 +33,14 @@ members = [
     "crates/debug_adapter_extension",
     "crates/debugger_tools",
     "crates/debugger_ui",
-    "crates/deepseek",
     "crates/dev_container",
     "crates/diagnostics",
     "crates/docs_preprocessor",
-    "crates/edit_prediction",
-    "crates/edit_prediction_cli",
-    "crates/edit_prediction_context",
-    "crates/edit_prediction_metrics",
-    "crates/edit_prediction_types",
-    "crates/edit_prediction_ui",
     "crates/editor",
     "crates/editor_benchmarks",
     "crates/encoding_selector",
     "crates/env_var",
     "crates/etw_tracing",
-    "crates/eval_cli",
-    "crates/eval_utils",
     "crates/explorer_command_injector",
     "crates/extension",
     "crates/extension_api",
@@ -87,7 +60,6 @@ members = [
     "crates/git_hosting_providers",
     "crates/git_ui",
     "crates/go_to_line",
-    "crates/google_ai",
     "crates/grammars",
     "crates/gpui",
     "crates/gpui_shared_string",
@@ -115,10 +87,6 @@ members = [
     "crates/language",
     "crates/language_core",
     "crates/language_extension",
-    "crates/language_model",
-    "crates/language_model_core",
-    "crates/language_models",
-    "crates/language_models_cloud",
     "crates/language_onboarding",
     "crates/language_selector",
     "crates/language_tools",
@@ -126,8 +94,6 @@ members = [
     "crates/line_ending_selector",
     "crates/livekit_api",
     "crates/livekit_client",
-    "crates/llama_cpp",
-    "crates/lmstudio",
     "crates/lsp",
     "crates/lsp_locations",
     "crates/markdown",
@@ -137,18 +103,13 @@ members = [
     "crates/menu",
     "crates/migrator",
     "crates/miniprofiler_ui",
-    "crates/mistral",
     "crates/multi_buffer",
     "crates/net",
     "crates/node_runtime",
     "crates/notifications",
     "crates/oauth_callback_server",
-    "crates/ollama",
     "crates/onboarding",
-    "crates/opencode",
-    "crates/open_ai",
     "crates/open_path_prompt",
-    "crates/open_router",
     "crates/outline",
     "crates/outline_panel",
     "crates/panel",
@@ -162,7 +123,6 @@ members = [
     "crates/project_benchmarks",
     "crates/project_panel",
     "crates/project_symbols",
-    "crates/prompt_store",
     "crates/proto",
     "crates/recent_projects",
     "crates/refineable",
@@ -187,7 +147,6 @@ members = [
     "crates/settings_profile_selector",
     "crates/settings_ui",
     "crates/shell_command_parser",
-    "crates/sidebar",
     "crates/snippet",
     "crates/snippet_provider",
     "crates/snippets_ui",
@@ -223,19 +182,15 @@ members = [
     "crates/vim",
     "crates/vim_mode_setting",
     "crates/watch",
-    "crates/web_search",
-    "crates/web_search_providers",
     "crates/which_key",
     "crates/workspace",
     "crates/worktree",
     "crates/worktree_benchmarks",
-    "crates/x_ai",
     "crates/zed",
     "crates/zed_actions",
     "crates/windows_resources",
     "crates/zed_credentials_provider",
     "crates/zed_env_vars",
-    "crates/zeta_prompt",
     "crates/zlog",
     "crates/zlog_settings",
     "crates/ztracing",
@@ -270,24 +225,12 @@ edition = "2024"
 # Workspace member crates
 #
 
-acp_tools = { path = "crates/acp_tools" }
-acp_thread = { path = "crates/acp_thread" }
-action_log = { path = "crates/action_log" }
 activity_indicator = { path = "crates/activity_indicator" }
-agent = { path = "crates/agent" }
-agent_servers = { path = "crates/agent_servers" }
-agent_settings = { path = "crates/agent_settings" }
-agent_skills = { path = "crates/agent_skills" }
-agent_ui = { path = "crates/agent_ui" }
-ai_onboarding = { path = "crates/ai_onboarding" }
-anthropic = { path = "crates/anthropic" }
 askpass = { path = "crates/askpass" }
 assets = { path = "crates/assets" }
 audio = { path = "crates/audio" }
 auto_update = { path = "crates/auto_update" }
 auto_update_ui = { path = "crates/auto_update_ui" }
-aws_http_client = { path = "crates/aws_http_client" }
-bedrock = { path = "crates/bedrock" }
 breadcrumbs = { path = "crates/breadcrumbs" }
 buffer_diff = { path = "crates/buffer_diff" }
 call = { path = "crates/call" }
@@ -295,9 +238,7 @@ channel = { path = "crates/channel" }
 cli = { path = "crates/cli" }
 client = { path = "crates/client" }
 clock = { path = "crates/clock" }
-cloud_api_client = { path = "crates/cloud_api_client" }
 cloud_api_types = { path = "crates/cloud_api_types" }
-cloud_llm_client = { path = "crates/cloud_llm_client" }
 collab = { path = "crates/collab" }
 collab_ui = { path = "crates/collab_ui" }
 collections = { path = "crates/collections", version = "0.1.0" }
@@ -307,10 +248,6 @@ compliance = { path = "tooling/compliance" }
 component = { path = "crates/component" }
 component_preview = { path = "crates/component_preview" }
 console = "0.16"
-context_server = { path = "crates/context_server" }
-copilot = { path = "crates/copilot" }
-copilot_chat = { path = "crates/copilot_chat" }
-copilot_ui = { path = "crates/copilot_ui" }
 crashes = { path = "crates/crashes" }
 credentials_provider = { path = "crates/credentials_provider" }
 crossbeam = "0.8.4"
@@ -321,7 +258,6 @@ db = { path = "crates/db" }
 debug_adapter_extension = { path = "crates/debug_adapter_extension" }
 debugger_tools = { path = "crates/debugger_tools" }
 debugger_ui = { path = "crates/debugger_ui" }
-deepseek = { path = "crates/deepseek" }
 derive_refineable = { path = "crates/refineable/derive_refineable" }
 dev_container = { path = "crates/dev_container" }
 diagnostics = { path = "crates/diagnostics" }
@@ -330,7 +266,6 @@ editor = { path = "crates/editor" }
 encoding_selector = { path = "crates/encoding_selector" }
 env_var = { path = "crates/env_var" }
 etw_tracing = { path = "crates/etw_tracing" }
-eval_utils = { path = "crates/eval_utils" }
 extension = { path = "crates/extension" }
 extension_host = { path = "crates/extension_host" }
 extensions_ui = { path = "crates/extensions_ui" }
@@ -346,7 +281,6 @@ git = { path = "crates/git" }
 git_hosting_providers = { path = "crates/git_hosting_providers" }
 git_ui = { path = "crates/git_ui" }
 go_to_line = { path = "crates/go_to_line" }
-google_ai = { path = "crates/google_ai" }
 grammars = { path = "crates/grammars" }
 gpui = { path = "crates/gpui", default-features = false }
 gpui_shared_string = { path = "crates/gpui_shared_string" }
@@ -365,9 +299,6 @@ http_client_tls = { path = "crates/http_client_tls" }
 http_proxy = { path = "crates/http_proxy" }
 icons = { path = "crates/icons" }
 image_viewer = { path = "crates/image_viewer" }
-edit_prediction_types = { path = "crates/edit_prediction_types" }
-edit_prediction_ui = { path = "crates/edit_prediction_ui" }
-edit_prediction_context = { path = "crates/edit_prediction_context" }
 input_latency_ui = { path = "crates/input_latency_ui" }
 inspector_ui = { path = "crates/inspector_ui" }
 install_cli = { path = "crates/install_cli" }
@@ -377,10 +308,6 @@ keymap_editor = { path = "crates/keymap_editor" }
 language = { path = "crates/language" }
 language_core = { path = "crates/language_core" }
 language_extension = { path = "crates/language_extension" }
-language_model = { path = "crates/language_model" }
-language_model_core = { path = "crates/language_model_core" }
-language_models = { path = "crates/language_models" }
-language_models_cloud = { path = "crates/language_models_cloud" }
 language_onboarding = { path = "crates/language_onboarding" }
 language_selector = { path = "crates/language_selector" }
 language_tools = { path = "crates/language_tools" }
@@ -388,8 +315,6 @@ languages = { path = "crates/languages" }
 line_ending_selector = { path = "crates/line_ending_selector" }
 livekit_api = { path = "crates/livekit_api" }
 livekit_client = { path = "crates/livekit_client" }
-llama_cpp = { path = "crates/llama_cpp" }
-lmstudio = { path = "crates/lmstudio" }
 lsp = { path = "crates/lsp" }
 lsp_locations = { path = "crates/lsp_locations" }
 markdown = { path = "crates/markdown" }
@@ -400,19 +325,14 @@ media = { path = "crates/media" }
 menu = { path = "crates/menu" }
 mime = "0.3.17"
 migrator = { path = "crates/migrator" }
-mistral = { path = "crates/mistral" }
 multi_buffer = { path = "crates/multi_buffer" }
 miniprofiler_ui = { path = "crates/miniprofiler_ui" }
 net = { path = "crates/net" }
 node_runtime = { path = "crates/node_runtime" }
 notifications = { path = "crates/notifications" }
 oauth_callback_server = { path = "crates/oauth_callback_server" }
-ollama = { path = "crates/ollama" }
 onboarding = { path = "crates/onboarding" }
-opencode = { path = "crates/opencode" }
-open_ai = { path = "crates/open_ai" }
 open_path_prompt = { path = "crates/open_path_prompt" }
-open_router = { path = "crates/open_router", features = ["schemars"] }
 outline = { path = "crates/outline" }
 outline_panel = { path = "crates/outline_panel" }
 panel = { path = "crates/panel" }
@@ -426,7 +346,6 @@ settings_profile_selector = { path = "crates/settings_profile_selector" }
 project = { path = "crates/project" }
 project_panel = { path = "crates/project_panel" }
 project_symbols = { path = "crates/project_symbols" }
-prompt_store = { path = "crates/prompt_store" }
 proto = { path = "crates/proto" }
 recent_projects = { path = "crates/recent_projects" }
 refineable = { path = "crates/refineable" }
@@ -443,7 +362,6 @@ scheduler = { path = "crates/scheduler" }
 sandbox = { path = "crates/sandbox" }
 search = { path = "crates/search" }
 session = { path = "crates/session" }
-sidebar = { path = "crates/sidebar" }
 settings = { path = "crates/settings" }
 settings_content = { path = "crates/settings_content" }
 settings_json = { path = "crates/settings_json" }
@@ -457,7 +375,6 @@ sqlez = { path = "crates/sqlez" }
 sqlez_macros = { path = "crates/sqlez_macros" }
 streaming_diff = { path = "crates/streaming_diff" }
 sum_tree = { path = "crates/sum_tree" }
-codestral = { path = "crates/codestral" }
 system_specs = { path = "crates/system_specs" }
 syntax_theme = { path = "crates/syntax_theme" }
 tab_switcher = { path = "crates/tab_switcher" }
@@ -487,18 +404,12 @@ vim_mode_setting = { path = "crates/vim_mode_setting" }
 which_key = { path = "crates/which_key" }
 
 watch = { path = "crates/watch" }
-web_search = { path = "crates/web_search" }
-web_search_providers = { path = "crates/web_search_providers" }
 workspace = { path = "crates/workspace" }
 worktree = { path = "crates/worktree" }
-x_ai = { path = "crates/x_ai" }
 zed = { path = "crates/zed" }
 zed_actions = { path = "crates/zed_actions" }
 zed_credentials_provider = { path = "crates/zed_credentials_provider" }
 zed_env_vars = { path = "crates/zed_env_vars" }
-edit_prediction = { path = "crates/edit_prediction" }
-edit_prediction_metrics = { path = "crates/edit_prediction_metrics" }
-zeta_prompt = { path = "crates/zeta_prompt" }
 zlog = { path = "crates/zlog" }
 zlog_settings = { path = "crates/zlog_settings" }
 ztracing = { path = "crates/ztracing" }
@@ -512,7 +423,6 @@ accesskit = { version = "0.24.0", features = ["enumn"] }
 accesskit_macos = "0.26.0"
 accesskit_unix = "0.21.0"
 accesskit_windows = "0.33.1"
-agent-client-protocol = { version = "=1.3.0", features = ["unstable"] }
 aho-corasick = "1.1"
 alacritty_terminal = { git = "https://github.com/zed-industries/alacritty", rev = "4c129667ce56611becdc82de6e28218c80e2e88f" }
 any_vec = "0.14"
@@ -1019,15 +929,11 @@ command_palette_hooks = { codegen-units = 1 }
 feature_flags = { codegen-units = 1 }
 file_icons = { codegen-units = 1 }
 image_viewer = { codegen-units = 1 }
-edit_prediction_ui = { codegen-units = 1 }
 install_cli = { codegen-units = 1 }
 journal = { codegen-units = 1 }
 json_schema_store = { codegen-units = 1 }
-llama_cpp = { codegen-units = 1 }
-lmstudio = { codegen-units = 1 }
 menu = { codegen-units = 1 }
 notifications = { codegen-units = 1 }
-ollama = { codegen-units = 1 }
 outline = { codegen-units = 1 }
 paths = { codegen-units = 1 }
 prettier = { codegen-units = 1 }
@@ -1036,7 +942,6 @@ refineable = { codegen-units = 1 }
 release_channel = { codegen-units = 1 }
 reqwest_client = { codegen-units = 1 }
 session = { codegen-units = 1 }
-sidebar = { codegen-units = 1 }
 snippet = { codegen-units = 1 }
 snippets_ui = { codegen-units = 1 }
 telemetry_events = { codegen-units = 1 }
