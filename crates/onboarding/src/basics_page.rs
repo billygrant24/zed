@@ -1,17 +1,10 @@
 use std::sync::Arc;
-use std::time::Duration;
 
-use client::{Client, TelemetrySettings, UserStore, zed_urls};
-use cloud_api_types::Plan;
-use collections::HashMap;
+use client::{TelemetrySettings, UserStore};
 use fs::Fs;
-use gpui::{Action, Animation, AnimationExt, App, Entity, IntoElement, TaskExt, pulsating_between};
-use project::agent_server_store::AllAgentServersSettings;
+use gpui::{Action, App, Entity, IntoElement};
 use project::project_settings::ProjectSettings;
-use project::{AgentRegistryStore, RegistryAgent};
-use settings::{
-    BaseKeymap, CustomAgentServerSettings, Settings, SettingsStore, update_settings_file,
-};
+use settings::{BaseKeymap, Settings, update_settings_file};
 use theme::{Appearance, SystemAppearance, ThemeRegistry};
 use theme_settings::{ThemeAppearanceMode, ThemeName, ThemeSelection, ThemeSettings};
 use ui::{

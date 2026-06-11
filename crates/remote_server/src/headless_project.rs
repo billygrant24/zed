@@ -14,7 +14,7 @@ use http_client::HttpClient;
 use language::{Buffer, BufferEvent, LanguageRegistry, proto::serialize_operation};
 use node_runtime::NodeRuntime;
 use project::{
-    AgentRegistryStore, LspStore, LspStoreEvent, ManifestTree, PrettierStore, ProjectEnvironment,
+    LspStore, LspStoreEvent, ManifestTree, PrettierStore, ProjectEnvironment,
     ProjectPath, ToolchainStore, WorktreeId,
     agent_server_store::AgentServerStore,
     buffer_store::{BufferStore, BufferStoreEvent},
@@ -231,28 +231,7 @@ impl HeadlessProject {
             lsp_store
         });
 
-        AgentRegistryStore::init_global(cx, fs.clone(), http_client.clone());
-
-        let agent_server_store = cx.new(|cx| {
-            let mut agent_server_store = AgentServerStore::local(
-                node_runtime.clone(),
-                fs.clone(),
-                environment.clone(),
-                http_client.clone(),
-                cx,
-            );
-            agent_server_store.shared(REMOTE_SERVER_PROJECT_ID, session.clone(), cx);
-            agent_server_store
-        });
-
-        let context_server_store = cx.new(|cx| {
-            let mut context_server_store =
-                ContextServerStore::local(worktree_store.clone(), None, true, cx);
-            context_server_store.shared(REMOTE_SERVER_PROJECT_ID, session.clone());
-            context_server_store
-        });
-
-        cx.subscribe(&lsp_store, Self::on_lsp_store_event).detach();
+cx.subscribe(&lsp_store, Self::on_lsp_store_event).detach();
         language_extension::init(
             language_extension::LspAccess::ViaLspStore(lsp_store.downgrade()),
             proxy.clone(),
