@@ -1,49 +1,56 @@
-# Zed
+# Focused Zed
 
-[![Zed](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/zed-industries/zed/main/assets/badge/v0.json)](https://zed.dev)
-[![CI](https://github.com/zed-industries/zed/actions/workflows/run_tests.yml/badge.svg)](https://github.com/zed-industries/zed/actions/workflows/run_tests.yml)
+Focused Zed is a macOS-only fork of [Zed](https://github.com/zed-industries/zed)
+for people who want a fast local editor without AI workflows, accounts, calls,
+channels, or collaborative editing.
 
-Welcome to Zed, a high-performance, multiplayer code editor from the creators of [Atom](https://github.com/atom/atom) and [Tree-sitter](https://github.com/tree-sitter/tree-sitter).
+The binary and application-data paths are still named `Zed`. That keeps this
+patch set small enough to rebase onto upstream releases. Do not install it over
+an upstream Zed installation unless sharing the same settings and data directory
+is intentional.
 
----
+## Product boundary
 
-### Installation
+- macOS is the only desktop target.
+- AI agents, model providers, edit prediction, inline AI actions, and AI
+  extension entry points are removed.
+- Sign-in, cloud collaboration, channels, calls, screen sharing, and audio are
+  removed.
+- Application self-update is removed. Updates come from rebuilding this fork.
+- SSH remotes and dev containers remain. Their headless remote server may run on
+  Linux because that is useful to a macOS editor.
+- Normal editor features remain: LSP, terminal, tasks, Git, debugger,
+  diagnostics, themes, and non-AI extensions.
 
-On macOS, Linux, and Windows you can [download Zed directly](https://zed.dev/download) or install Zed via your local package manager ([macOS](https://zed.dev/docs/installation#macos)/[Linux](https://zed.dev/docs/linux#installing-via-a-package-manager)/[Windows](https://zed.dev/docs/windows#package-managers)).
+The enforceable product contract, compatibility exceptions, and upstream update
+procedure are in [FOCUSED_PRODUCT.md](./FOCUSED_PRODUCT.md).
 
-Other platforms are not yet available:
+## Build on macOS
 
-- Web ([tracking discussion](https://github.com/zed-industries/zed/discussions/26195))
+Install Xcode and Rust, then:
 
-### Developing Zed
+```sh
+xcodebuild -downloadComponent MetalToolchain
+cargo check -p zed --tests
+cargo run -p zed
+```
 
-- [Building Zed for macOS](./docs/src/development/macos.md)
-- [Building Zed for Linux](./docs/src/development/linux.md)
-- [Building Zed for Windows](./docs/src/development/windows.md)
+To create a local application bundle, use:
 
-### Contributing
+```sh
+script/bundle-mac -d
+```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for ways you can contribute to Zed.
+Before committing an upstream merge, run:
 
-Also... we're hiring! Check out our [jobs](https://zed.dev/jobs) page for open roles.
+```sh
+./script/check-focused-product
+cargo fmt --all -- --check
+cargo check -p zed --tests
+cargo check -p remote_server
+```
 
-### Licensing
+## Licensing
 
-Zed source code is licensed primarily under GPL-3.0-or-later, with Apache-2.0 components where marked.
-
-License information for third party dependencies must be correctly provided for CI to pass.
-
-We use [`cargo-about`](https://github.com/EmbarkStudios/cargo-about) to automatically comply with open source licenses. If CI is failing, check the following:
-
-- Is it showing a `no license specified` error for a crate you've created? If so, add `publish = false` under `[package]` in your crate's Cargo.toml.
-- Is the error `failed to satisfy license requirements` for a dependency? If so, first determine what license the project has and whether this system is sufficient to comply with this license's requirements. If you're unsure, ask a lawyer. Once you've verified that this system is acceptable add the license's SPDX identifier to the `accepted` array in `script/licenses/zed-licenses.toml`.
-- Is `cargo-about` unable to find the license for a dependency? If so, add a clarification field at the end of `script/licenses/zed-licenses.toml`, as specified in the [cargo-about book](https://embarkstudios.github.io/cargo-about/cli/generate/config.html#crate-configuration).
-
-## Sponsorship
-
-Zed is developed by **Zed Industries, Inc.**, a for-profit company.
-
-If you’d like to financially support the project, you can do so via GitHub Sponsors.
-Sponsorships go directly to Zed Industries and are used as general company revenue.
-There are no perks or entitlements associated with sponsorship.
-
+This fork preserves Zed's licensing and attribution. Zed source code is licensed
+primarily under GPL-3.0-or-later, with Apache-2.0 components where marked.

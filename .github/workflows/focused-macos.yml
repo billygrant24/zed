@@ -1,0 +1,27 @@
+name: focused-macos
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: macos-14
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Metal toolchain
+        run: xcodebuild -downloadComponent MetalToolchain
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Enforce focused-product boundary
+        run: ./script/check-focused-product
+      - name: Check macOS editor
+        run: cargo check --locked -p zed --tests
+      - name: Test GPUI
+        run: cargo test --locked -p gpui --lib
+      - name: Check remote server
+        run: cargo check --locked -p remote_server

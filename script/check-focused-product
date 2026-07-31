@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+fail() {
+    echo "focused-product check failed: $*" >&2
+    exit 1
+}
+
+removed_crates=(
+    acp_thread acp_tools action_log agent agent_servers agent_settings agent_skills
+    agent_ui ai_onboarding anthropic audio aws_http_client bedrock call channel
+    cloud_api_client cloud_llm_client codestral collab collab_ui context_server
+    copilot copilot_chat copilot_ui deepseek edit_prediction edit_prediction_cli
+    edit_prediction_context edit_prediction_metrics edit_prediction_types
+    edit_prediction_ui eval_cli eval_utils google_ai language_model
+    language_model_core language_models language_models_cloud livekit_api
+    livekit_client llama_cpp lmstudio mistral ollama open_ai open_router opencode
+    prompt_store sidebar web_search web_search_providers x_ai zeta_prompt
+    auto_update auto_update_helper auto_update_ui etw_tracing gpui_linux gpui_web
+    gpui_windows windows_resources
+)
+
+for crate in "${removed_crates[@]}"; do
+    if [[ -f "crates/$crate/Cargo.toml" ]]; then
+        fail "removed crate has returned: crates/$crate"
+    fi
+done
+
+cargo metadata --locked --no-deps --format-version 1 >/dev/null
+
+zed_tree="$(cargo tree --locked -p zed --edges normal --prefix none --format '{p}')"
+banned_packages=(
+    acp_thread acp_tools action_log agent agent_servers agent_settings agent_skills
+    agent_ui ai_onboarding anthropic audio bedrock call channel cloud_api_client
+    cloud_llm_client codestral collab collab_ui context_server copilot copilot_chat
+    copilot_ui deepseek edit_prediction edit_prediction_context
+    edit_prediction_metrics edit_prediction_types edit_prediction_ui google_ai
+    language_model language_model_core language_models language_models_cloud
+    livekit_api livekit_client llama_cpp lmstudio mistral ollama open_ai open_router
+    opencode prompt_store web_search web_search_providers x_ai zeta_prompt
+    auto_update auto_update_ui gpui_linux gpui_web gpui_windows zed-scap
+)
+
+for package in "${banned_packages[@]}"; do
+    if rg -q "^${package} " <<<"$zed_tree"; then
+        fail "forbidden package is linked into the editor: $package"
+    fi
+done
+
+if ! rg -q '^remote_server_download ' <<<"$zed_tree"; then
+    fail "remote-server downloader is missing from the SSH/dev-container path"
+fi
+
+for path in \
+    crates/zed/resources/flatpak \
+    crates/zed/resources/snap \
+    crates/zed/resources/windows \
+    script/flatpak
+do
+    if [[ -d "$path" && -n "$(find "$path" -type f -print -quit)" ]]; then
+        fail "unsupported desktop packaging path has returned: $path"
+    fi
+done
+
+for path in \
+    script/bundle-freebsd \
+    script/bundle-linux \
+    script/bundle-windows.ps1 \
+    script/install-linux \
+    script/linux \
+    script/freebsd \
+    script/snap-build \
+    script/snap-try
+do
+    if [[ -e "$path" ]]; then
+        fail "unsupported desktop script has returned: $path"
+    fi
+done
+
+if rg -n \
+    'auto_update::init|auto_update_ui::init|agent_ui::init|collab_ui::init|call::init|(^|[^[:alnum:]_])channel::init' \
+    crates/zed crates/title_bar crates/activity_indicator crates/zed_actions
+then
+    fail "excluded product initialization has returned"
+fi
+
+if rg -n \
+    'Check for Updates|ShowUpdateNotification|View Release Notes Locally' \
+    crates/zed crates/title_bar crates/activity_indicator crates/zed_actions
+then
+    fail "desktop self-update UI has returned"
+fi
+
+if rg -n \
+    'gpui_(linux|windows|web)|windows_resources|features = \[[^]]*(wayland|x11)' \
+    Cargo.toml crates/zed/Cargo.toml crates/cli/Cargo.toml \
+    crates/gpui/Cargo.toml crates/gpui_platform/Cargo.toml
+then
+    fail "unsupported desktop platform dependency has returned"
+fi
+
+if rg -n \
+    'screen-capture|screen_capture|ScreenCapture' \
+    crates/gpui crates/gpui_macos crates/gpui_platform crates/title_bar crates/zed \
+    --glob '*.{toml,rs}'
+then
+    fail "removed screen-sharing infrastructure has returned"
+fi
+
+rg -q \
+    'compile_error!\("the focused editor desktop target supports macOS only"\)' \
+    crates/gpui_platform/src/gpui_platform.rs \
+    || fail "gpui_platform no longer rejects non-macOS desktop builds"
+
+rg -q \
+    'compile_error!\("the focused editor desktop target supports macOS only"\)' \
+    crates/zed/src/main.rs \
+    || fail "the desktop binary no longer rejects non-macOS builds"
+
+echo "focused-product boundary: ok"
