@@ -12,9 +12,6 @@ mod keyboard;
 mod pasteboard;
 mod system_notifications;
 
-#[cfg(feature = "screen-capture")]
-mod screen_capture;
-
 mod metal_atlas;
 pub mod metal_renderer;
 

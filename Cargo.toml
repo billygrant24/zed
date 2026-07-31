@@ -4,9 +4,7 @@ members = [
     "crates/activity_indicator",
     "crates/askpass",
     "crates/assets",
-    "crates/auto_update",
-    "crates/auto_update_helper",
-    "crates/auto_update_ui",
+    "crates/remote_server_download",
     "crates/benchmarks",
     "crates/breadcrumbs",
     "crates/buffer_diff",
@@ -35,7 +33,6 @@ members = [
     "crates/editor_benchmarks",
     "crates/encoding_selector",
     "crates/env_var",
-    "crates/etw_tracing",
     "crates/explorer_command_injector",
     "crates/extension",
     "crates/extension_api",
@@ -58,15 +55,12 @@ members = [
     "crates/grammars",
     "crates/gpui",
     "crates/gpui_shared_string",
-    "crates/gpui_linux",
     "crates/gpui_macos",
     "crates/gpui_macros",
     "crates/gpui_platform",
     "crates/gpui_tokio",
     "crates/gpui_util",
-    "crates/gpui_web",
     "crates/gpui_wgpu",
-    "crates/gpui_windows",
     "crates/html_to_markdown",
     "crates/http_client",
     "crates/http_client_tls",
@@ -181,7 +175,6 @@ members = [
     "crates/worktree_benchmarks",
     "crates/zed",
     "crates/zed_actions",
-    "crates/windows_resources",
     "crates/zed_credentials_provider",
     "crates/zed_env_vars",
     "crates/zlog",
@@ -221,8 +214,7 @@ edition = "2024"
 activity_indicator = { path = "crates/activity_indicator" }
 askpass = { path = "crates/askpass" }
 assets = { path = "crates/assets" }
-auto_update = { path = "crates/auto_update" }
-auto_update_ui = { path = "crates/auto_update_ui" }
+remote_server_download = { path = "crates/remote_server_download" }
 breadcrumbs = { path = "crates/breadcrumbs" }
 buffer_diff = { path = "crates/buffer_diff" }
 cli = { path = "crates/cli" }
@@ -253,7 +245,6 @@ dialoguer = { version = "0.12", default-features = false }
 editor = { path = "crates/editor" }
 encoding_selector = { path = "crates/encoding_selector" }
 env_var = { path = "crates/env_var" }
-etw_tracing = { path = "crates/etw_tracing" }
 extension = { path = "crates/extension" }
 extension_host = { path = "crates/extension_host" }
 extensions_ui = { path = "crates/extensions_ui" }
@@ -272,13 +263,10 @@ go_to_line = { path = "crates/go_to_line" }
 grammars = { path = "crates/grammars" }
 gpui = { path = "crates/gpui", default-features = false }
 gpui_shared_string = { path = "crates/gpui_shared_string" }
-gpui_linux = { path = "crates/gpui_linux", default-features = false }
 gpui_macos = { path = "crates/gpui_macos", default-features = false }
 gpui_macros = { path = "crates/gpui_macros" }
 gpui_platform = { path = "crates/gpui_platform", default-features = false }
-gpui_web = { path = "crates/gpui_web" }
 gpui_wgpu = { path = "crates/gpui_wgpu" }
-gpui_windows = { path = "crates/gpui_windows", default-features = false }
 gpui_tokio = { path = "crates/gpui_tokio" }
 gpui_util = { path = "crates/gpui_util" }
 html_to_markdown = { path = "crates/html_to_markdown" }
@@ -672,8 +660,6 @@ rust-embed = { version = "8.11", features = ["include-exclude"] }
 rustc-hash = "2.1.0"
 rustls = { version = "0.23.26" }
 rustls-platform-verifier = "0.5.0"
-# WARNING: If you change this, you must also publish a new version of zed-scap to crates.io
-scap = { git = "https://github.com/zed-industries/scap", rev = "4afea48c3b002197176fb19cd0f9b180dd36eaac", default-features = false, package = "zed-scap", version = "0.0.8-zed" }
 schemars = { version = "1.0", features = ["indexmap2"] }
 seccompiler = "0.5"
 semver = { version = "1.0", features = ["serde"] }
@@ -850,8 +836,6 @@ features = [
 [patch.crates-io]
 async-process = { git = "https://github.com/zed-industries/async-process.git", rev = "0b6d6713570af61806e1e5cb40e0f757cb93fd9d" }
 async-task = { git = "https://github.com/smol-rs/async-task.git", rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e" }
-windows-capture = { git = "https://github.com/zed-industries/windows-capture.git", rev = "f0d6c1b6691db75461b732f6d5ff56eed002eeb9" }
-calloop = { git = "https://github.com/zed-industries/calloop" }
 notify = { git = "https://github.com/zed-industries/notify", rev = "0890bbb8ca40a4b5d1f67031698dd7918b37d991" }
 notify-types = { git = "https://github.com/zed-industries/notify", rev = "0890bbb8ca40a4b5d1f67031698dd7918b37d991" }
 

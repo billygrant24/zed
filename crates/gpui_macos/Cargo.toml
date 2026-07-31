@@ -12,11 +12,10 @@ workspace = true
 path = "src/gpui_macos.rs"
 
 [features]
-default = ["gpui/default"]
+default = ["font-kit"]
 test-support = ["gpui/test-support"]
 runtime_shaders = []
 font-kit = ["dep:font-kit"]
-screen-capture = ["gpui/screen-capture"]
 
 [dependencies]
 gpui.workspace = true

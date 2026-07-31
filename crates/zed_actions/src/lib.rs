@@ -79,8 +79,6 @@ actions!(
         OpenPerformanceProfiler,
         /// Opens the onboarding view.
         OpenOnboarding,
-        /// Shows the auto-update notification for testing.
-        ShowUpdateNotification,
     ]
 );
 

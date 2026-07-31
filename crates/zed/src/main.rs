@@ -1,5 +1,5 @@
-// Disable command line from opening on release mode
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#[cfg(not(target_os = "macos"))]
+compile_error!("the focused editor desktop target supports macOS only");
 
 mod reliability;
 mod zed;
@@ -92,7 +92,6 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
     let error_details = errors
         .into_iter()
         .flat_map(|(kind, paths)| {
-            #[allow(unused_mut)] // for non-unix platforms
             let mut error_kind_details = match paths.len() {
                 0 => return None,
                 1 => format!(
@@ -102,12 +101,9 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
                 _many => format!("{kind} when creating directories {paths:?}"),
             };
 
-            #[cfg(unix)]
-            {
-                if kind == io::ErrorKind::PermissionDenied {
-                    error_kind_details.push_str("\n\nConsider using chown and chmod tools for altering the directories permissions if your user has corresponding rights.\
+            if kind == io::ErrorKind::PermissionDenied {
+                error_kind_details.push_str("\n\nConsider using chown and chmod tools for altering the directories permissions if your user has corresponding rights.\
                         \nFor example, `sudo chown $(whoami):staff ~/.config` and `chmod +uwrx ~/.config`");
-                }
             }
 
             Some(error_kind_details)
@@ -149,46 +145,8 @@ fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
 }
 
 fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
-    eprintln!(
-        "Zed failed to open a window: {e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
-    );
-    #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
-    {
-        process::exit(1);
-    }
-
-    // Maybe unify this with gpui::platform::linux::platform::ResultExt::notify_err(..)?
-    #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-    {
-        use ashpd::desktop::notification::{Notification, NotificationProxy, Priority};
-        _cx.spawn(async move |_cx| {
-            let Ok(proxy) = NotificationProxy::new().await else {
-                process::exit(1);
-            };
-
-            let notification_id = "dev.zed.Oops";
-            proxy
-                .add_notification(
-                    notification_id,
-                    Notification::new("Zed failed to launch")
-                        .body(Some(
-                            format!(
-                                "{e:?}. See https://zed.dev/docs/linux for troubleshooting steps."
-                            )
-                            .as_str(),
-                        ))
-                        .priority(Priority::High)
-                        .icon(ashpd::desktop::Icon::with_names(&[
-                            "dialog-question-symbolic",
-                        ])),
-                )
-                .await
-                .ok();
-
-            process::exit(1);
-        })
-        .detach();
-    }
+    eprintln!("Focused Zed failed to open a window: {e:?}");
+    process::exit(1);
 }
 static STARTUP_TIME: OnceLock<Instant> = OnceLock::new();
 
@@ -201,13 +159,11 @@ fn main() {
     // own arguments.
     sandbox::run_sandbox_launcher_if_invoked();
 
-    #[cfg(unix)]
     util::prevent_root_execution();
 
     let args = Args::parse();
 
     // `zed --askpass` Makes zed operate in nc/netcat mode for use with askpass
-    #[cfg(not(target_os = "windows"))]
     if let Some(socket) = &args.askpass {
         askpass::main(socket);
         return;
@@ -217,39 +173,6 @@ fn main() {
     if let Some(socket) = &args.crash_handler {
         crashes::crash_server(socket.as_path(), paths::logs_dir().clone());
         return;
-    }
-
-    #[cfg(target_os = "windows")]
-    if args.record_etw_trace {
-        let zed_pid = args
-            .etw_zed_pid
-            .and_then(|pid| if pid >= 0 { Some(pid as u32) } else { None });
-        let Some(output_path) = args.etw_output else {
-            eprintln!("--etw-output is required for --record-etw-trace");
-            process::exit(1);
-        };
-
-        let Some(etw_socket) = args.etw_socket else {
-            eprintln!("--etw-socket is required for --record-etw-trace");
-            process::exit(1);
-        };
-
-        if let Err(error) =
-            etw_tracing::record_etw_trace(zed_pid, &output_path, etw_socket.as_str())
-        {
-            eprintln!("ETW trace recording failed: {error:#}");
-            process::exit(1);
-        }
-        return;
-    }
-
-    #[cfg(all(not(debug_assertions), target_os = "windows"))]
-    unsafe {
-        use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
-
-        if args.foreground {
-            let _ = AttachConsole(ATTACH_PARENT_PROCESS);
-        }
     }
 
     // `zed --printenv` Outputs environment variables as JSON to stdout
@@ -266,17 +189,6 @@ fn main() {
     // Set custom data directory.
     if let Some(dir) = &args.user_data_dir {
         paths::set_custom_data_dir(dir);
-    }
-
-    #[cfg(target_os = "windows")]
-    match util::get_zed_cli_path() {
-        Ok(path) => askpass::set_askpass_program(path),
-        Err(err) => {
-            eprintln!("Error: {}", err);
-            if std::option_env!("ZED_BUNDLE").is_some() {
-                process::exit(1);
-            }
-        }
     }
 
     let file_errors = init_paths();
@@ -332,9 +244,6 @@ fn main() {
             .unwrap_or("unknown"),
     );
 
-    #[cfg(windows)]
-    check_for_conpty_dll();
-
     let app = build_application().with_assets(Assets);
 
     let app_db = db::AppDatabase::new();
@@ -356,17 +265,6 @@ fn main() {
     {
         false
     } else {
-        #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-        {
-            crate::zed::listen_for_cli_connections(open_listener.clone()).is_err()
-        }
-
-        #[cfg(target_os = "windows")]
-        {
-            !crate::zed::windows_only_instance::handle_single_instance(open_listener.clone(), &args)
-        }
-
-        #[cfg(target_os = "macos")]
         {
             use zed::mac_only_instance::*;
             ensure_only_instance() != IsOnlyInstance::Yes
@@ -645,9 +543,7 @@ fn main() {
         });
         AppState::set_global(app_state.clone(), cx);
 
-        auto_update::init(client.clone(), cx);
         dap_adapters::init(cx);
-        auto_update_ui::init(cx);
         reliability::init(client.clone(), app_state.workspace_store.clone(), cx);
         extension_host::init(
             extension_host_proxy.clone(),
@@ -726,9 +622,6 @@ fn main() {
         json_schema_store::init(cx);
         miniprofiler_ui::init(*STARTUP_TIME.get().unwrap(), cx);
         which_key::init(cx);
-        #[cfg(target_os = "windows")]
-        etw_tracing::init(cx);
-
         cx.observe_global::<SettingsStore>({
             let http = app_state.client.http_client();
             let client = app_state.client.clone();
@@ -833,9 +726,6 @@ fn main() {
             .map(|chunk| [chunk[0].clone(), chunk[1].clone()])
             .collect();
 
-        #[cfg(target_os = "windows")]
-        let wsl = args.wsl;
-        #[cfg(not(target_os = "windows"))]
         let wsl = None;
 
         if !urls.is_empty() || !diff_paths.is_empty() {
@@ -1501,23 +1391,8 @@ struct Args {
     ///
     /// This overrides the default platform-specific data directory location.
     /// On macOS, the default is `~/Library/Application Support/Zed`.
-    /// On Linux/FreeBSD, the default is `$XDG_DATA_HOME/zed`.
-    /// On Windows, the default is `%LOCALAPPDATA%\Zed`.
     #[arg(long, value_name = "DIR", verbatim_doc_comment)]
     user_data_dir: Option<String>,
-
-    /// The username and WSL distribution to use when opening paths. If not specified,
-    /// Zed will attempt to open the paths directly.
-    ///
-    /// The username is optional, and if not specified, the default user for the distribution
-    /// will be used.
-    ///
-    /// Example: `me@Ubuntu` or `Ubuntu`.
-    ///
-    /// WARN: You should not fill in this field by hand.
-    #[cfg(target_os = "windows")]
-    #[arg(long, value_name = "USER@DISTRO")]
-    wsl: Option<String>,
 
     /// Open the project in a dev container.
     ///
@@ -1543,22 +1418,9 @@ struct Args {
     #[arg(long, hide = true)]
     crash_handler: Option<PathBuf>,
 
-    /// Run zed in the foreground, only used on Windows, to match the behavior on macOS.
-    #[arg(long)]
-    #[cfg(target_os = "windows")]
-    #[arg(hide = true)]
-    foreground: bool,
-
-    /// The dock action to perform. This is used on Windows only.
-    #[arg(long)]
-    #[cfg(target_os = "windows")]
-    #[arg(hide = true)]
-    dock_action: Option<usize>,
-
     /// Used for SSH/Git password authentication, to remove the need for netcat as a dependency,
     /// by having Zed act like netcat communicating over a Unix socket.
     #[arg(long)]
-    #[cfg(not(target_os = "windows"))]
     #[arg(hide = true)]
     askpass: Option<String>,
 
@@ -1568,26 +1430,6 @@ struct Args {
     /// Output current environment variables as JSON to stdout
     #[arg(long, hide = true)]
     printenv: bool,
-
-    /// Record an ETW trace. Must be run as administrator.
-    #[cfg(target_os = "windows")]
-    #[arg(long, hide = true)]
-    record_etw_trace: bool,
-
-    /// The PID of the Zed process to trace for heap analysis.
-    #[cfg(target_os = "windows")]
-    #[arg(long, hide = true, allow_hyphen_values = true)]
-    etw_zed_pid: Option<i64>,
-
-    /// Output path for the ETW trace file.
-    #[cfg(target_os = "windows")]
-    #[arg(long, hide = true)]
-    etw_output: Option<PathBuf>,
-
-    /// Unix socket path for IPC with the parent Zed process.
-    #[cfg(target_os = "windows")]
-    #[arg(long, hide = true)]
-    etw_socket: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -1798,22 +1640,4 @@ fn dump_all_gpui_actions() {
         serde_json::to_string_pretty(&output).unwrap().as_bytes(),
     )
     .unwrap();
-}
-
-#[cfg(target_os = "windows")]
-fn check_for_conpty_dll() {
-    use windows::{
-        Win32::{Foundation::FreeLibrary, System::LibraryLoader::LoadLibraryW},
-        core::w,
-    };
-
-    if let Ok(hmodule) = unsafe { LoadLibraryW(w!("conpty.dll")) } {
-        unsafe {
-            FreeLibrary(hmodule)
-                .context("Failed to free conpty.dll")
-                .log_err();
-        }
-    } else {
-        log::warn!("Failed to load conpty.dll. Terminal will work with reduced functionality.");
-    }
 }

@@ -1,6 +1,9 @@
 //! Convenience crate that re-exports GPUI's platform traits and the
 //! `current_platform` constructor so consumers don't need `#[cfg]` gating.
 
+#[cfg(not(target_os = "macos"))]
+compile_error!("the focused editor desktop target supports macOS only");
+
 pub use gpui::Platform;
 
 use std::rc::Rc;
@@ -18,61 +21,17 @@ pub fn headless() -> gpui::Application {
     gpui::Application::with_platform(current_platform(true))
 }
 
-/// Unlike `application`, this function returns a single-threaded web application.
-#[cfg(target_family = "wasm")]
-pub fn single_threaded_web() -> gpui::Application {
-    gpui::Application::with_platform(Rc::new(gpui_web::WebPlatform::new(false)))
-}
-
-/// Initializes panic hooks and logging for the web platform.
-/// Call this before running the application in a wasm_bindgen entrypoint.
-#[cfg(target_family = "wasm")]
-pub fn web_init() {
-    console_error_panic_hook::set_once();
-    gpui_web::init_logging();
-}
-
 /// Returns the default [`Platform`] for the current OS.
 pub fn current_platform(headless: bool) -> Rc<dyn Platform> {
-    #[cfg(target_os = "macos")]
-    {
-        Rc::new(gpui_macos::MacPlatform::new(headless))
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        Rc::new(
-            gpui_windows::WindowsPlatform::new(headless)
-                .expect("failed to initialize Windows platform"),
-        )
-    }
-
-    #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-    {
-        gpui_linux::current_platform(headless)
-    }
-
-    #[cfg(target_family = "wasm")]
-    {
-        let _ = headless;
-        Rc::new(gpui_web::WebPlatform::new(true))
-    }
+    Rc::new(gpui_macos::MacPlatform::new(headless))
 }
 
 /// Returns a new [`HeadlessRenderer`] for the current platform, if available.
 #[cfg(feature = "test-support")]
 pub fn current_headless_renderer() -> Option<Box<dyn gpui::PlatformHeadlessRenderer>> {
-    #[cfg(target_os = "macos")]
-    {
-        Some(Box::new(
-            gpui_macos::metal_renderer::MetalHeadlessRenderer::new(),
-        ))
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    {
-        None
-    }
+    Some(Box::new(
+        gpui_macos::metal_renderer::MetalHeadlessRenderer::new(),
+    ))
 }
 
 #[cfg(all(test, target_os = "macos"))]

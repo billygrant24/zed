@@ -1,8 +1,6 @@
 mod app_menus;
-#[cfg(target_os = "macos")]
 pub(crate) mod mac_only_instance;
 mod migrate;
-#[cfg(target_os = "macos")]
 pub(crate) mod move_to_applications;
 mod open_listener;
 mod open_url_modal;
@@ -11,9 +9,6 @@ pub mod remote_debug;
 pub mod telemetry_log;
 #[cfg(all(target_os = "macos", feature = "visual-tests"))]
 pub mod visual_tests;
-#[cfg(target_os = "windows")]
-pub(crate) mod windows_only_instance;
-
 use anyhow::Context as _;
 pub use app_menus::*;
 use assets::Assets;
@@ -183,11 +178,8 @@ actions!(
 );
 
 pub fn init(cx: &mut App) {
-    #[cfg(target_os = "macos")]
     cx.on_action(|_: &Hide, cx| cx.hide());
-    #[cfg(target_os = "macos")]
     cx.on_action(|_: &HideOthers, cx| cx.hide_other_apps());
-    #[cfg(target_os = "macos")]
     cx.on_action(|_: &ShowAll, cx| cx.unhide_other_apps());
     cx.on_action(quit);
 
@@ -321,27 +313,16 @@ pub fn init(cx: &mut App) {
 }
 
 fn bind_on_window_closed(cx: &mut App) -> Option<gpui::Subscription> {
-    #[cfg(target_os = "macos")]
-    {
-        WorkspaceSettings::get_global(cx)
-            .on_last_window_closed
-            .is_quit_app()
-            .then(|| {
-                cx.on_window_closed(|cx, _window_id| {
-                    if cx.windows().is_empty() {
-                        cx.quit();
-                    }
-                })
+    WorkspaceSettings::get_global(cx)
+        .on_last_window_closed
+        .is_quit_app()
+        .then(|| {
+            cx.on_window_closed(|cx, _window_id| {
+                if cx.windows().is_empty() {
+                    cx.quit();
+                }
             })
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        Some(cx.on_window_closed(|cx, _window_id| {
-            if cx.windows().is_empty() {
-                cx.quit();
-            }
-        }))
-    }
+        })
 }
 
 pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowOptions {
@@ -361,21 +342,6 @@ pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowO
     };
 
     let use_system_window_tabs = WorkspaceSettings::get_global(cx).use_system_window_tabs;
-
-    #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-    static APP_ICON: std::sync::LazyLock<Option<std::sync::Arc<image::RgbaImage>>> =
-        std::sync::LazyLock::new(|| {
-            // this shouldn't fail since decode is checked in build.rs
-            const BYTES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/app_icon.png"));
-            util::maybe!({
-                let image = image::ImageReader::new(std::io::Cursor::new(BYTES))
-                    .with_guessed_format()?
-                    .decode()?
-                    .into();
-                anyhow::Ok(Arc::new(image))
-            })
-            .log_err()
-        });
 
     WindowOptions {
         titlebar: Some(TitlebarOptions {
@@ -397,8 +363,6 @@ pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowO
         display_id: display.map(|display| display.id()),
         window_background: cx.theme().window_background_appearance(),
         app_id: Some(app_id.to_owned()),
-        #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-        icon: APP_ICON.as_ref().cloned(),
         window_decorations: Some(window_decorations),
         window_min_size: Some(gpui::Size {
             width: px(360.0),
@@ -510,9 +474,6 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
         })
         .detach();
 
-        #[cfg(not(any(test, target_os = "macos")))]
-        initialize_file_watcher(window, cx);
-
         if let Some(specs) = window.gpu_specs() {
             log::info!("Using GPU: {:?}", specs);
             show_software_emulation_warning_if_needed(specs.clone(), window, cx);
@@ -581,87 +542,15 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
     .detach();
 }
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-#[allow(unused)]
-fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
-    if let Err(e) = fs::fs_watcher::global(|_| {}) {
-        let message = format!(
-            db::indoc! {r#"
-            inotify_init returned {}
-
-            This may be due to system-wide limits on inotify instances. For troubleshooting see: https://zed.dev/docs/linux
-            "#},
-            e
-        );
-        let prompt = window.prompt(
-            PromptLevel::Critical,
-            "Could not start inotify",
-            Some(&message),
-            &["Troubleshoot and Quit"],
-            cx,
-        );
-        cx.spawn(async move |_, cx| {
-            if prompt.await == Ok(0) {
-                cx.update(|cx| {
-                    cx.open_url("https://zed.dev/docs/linux#could-not-start-inotify");
-                    cx.quit();
-                });
-            }
-        })
-        .detach()
-    }
-}
-
-#[cfg(target_os = "windows")]
-#[allow(unused)]
-fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
-    if let Err(e) = fs::fs_watcher::global(|_| {}) {
-        let message = format!(
-            db::indoc! {r#"
-            ReadDirectoryChangesW initialization failed: {}
-
-            This may occur on network filesystems and WSL paths. For troubleshooting see: https://zed.dev/docs/windows
-            "#},
-            e
-        );
-        let prompt = window.prompt(
-            PromptLevel::Critical,
-            "Could not start ReadDirectoryChangesW",
-            Some(&message),
-            &["Troubleshoot and Quit"],
-            cx,
-        );
-        cx.spawn(async move |_, cx| {
-            if prompt.await == Ok(0) {
-                cx.update(|cx| {
-                    cx.open_url("https://zed.dev/docs/windows");
-                    cx.quit()
-                });
-            }
-        })
-        .detach()
-    }
-}
-
 fn show_software_emulation_warning_if_needed(
     specs: gpui::GpuSpecs,
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
     if specs.is_software_emulated && std::env::var("ZED_ALLOW_EMULATED_GPU").is_err() {
-        let (graphics_api, docs_url, open_url) = if cfg!(target_os = "windows") {
-            (
-                "DirectX",
-                "https://zed.dev/docs/windows",
-                "https://zed.dev/docs/windows",
-            )
-        } else {
-            (
-                "Vulkan",
-                "https://zed.dev/docs/linux",
-                "https://zed.dev/docs/linux#zed-fails-to-open-windows",
-            )
-        };
+        let graphics_api = "Metal";
+        let docs_url = "https://zed.dev/docs/development/macos";
+        let open_url = docs_url;
         let message = format!(
             db::indoc! {r#"
             Zed uses {} for rendering and requires a compatible GPU.
@@ -1134,7 +1023,6 @@ fn register_actions(
             }
         });
 
-    #[cfg(not(target_os = "windows"))]
     workspace.register_action(install_cli);
 
     if workspace.project().read(cx).is_via_remote_server() {
@@ -1488,7 +1376,6 @@ fn open_about_window(cx: &mut App) {
     .log_err();
 }
 
-#[cfg(not(target_os = "windows"))]
 fn install_cli(
     _: &mut Workspace,
     _: &install_cli::InstallCliBinary,
@@ -1893,31 +1780,15 @@ pub fn handle_keymap_file_changes(
     })
     .detach();
 
-    #[cfg(target_os = "windows")]
-    {
-        let mut current_layout_id = cx.keyboard_layout().id().to_string();
-        cx.on_keyboard_layout_change(move |cx| {
-            let next_layout_id = cx.keyboard_layout().id();
-            if next_layout_id != current_layout_id {
-                current_layout_id = next_layout_id.to_string();
-                keyboard_layout_tx.unbounded_send(()).ok();
-            }
-        })
-        .detach();
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let mut current_mapping = cx.keyboard_mapper().get_key_equivalents().cloned();
-        cx.on_keyboard_layout_change(move |cx| {
-            let next_mapping = cx.keyboard_mapper().get_key_equivalents();
-            if current_mapping.as_ref() != next_mapping {
-                current_mapping = next_mapping.cloned();
-                keyboard_layout_tx.unbounded_send(()).ok();
-            }
-        })
-        .detach();
-    }
+    let mut current_mapping = cx.keyboard_mapper().get_key_equivalents().cloned();
+    cx.on_keyboard_layout_change(move |cx| {
+        let next_mapping = cx.keyboard_mapper().get_key_equivalents();
+        if current_mapping.as_ref() != next_mapping {
+            current_mapping = next_mapping.cloned();
+            keyboard_layout_tx.unbounded_send(()).ok();
+        }
+    })
+    .detach();
 
     load_default_keymap(cx);
 
@@ -2059,8 +1930,6 @@ fn reload_keymaps(cx: &mut App, mut user_key_bindings: Vec<KeyBinding>) {
 
     let menus = app_menus(cx);
     cx.set_menus(menus);
-    // On Windows, this is set in the `update_jump_list` method of the `HistoryManager`.
-    #[cfg(not(target_os = "windows"))]
     cx.set_dock_menu(vec![gpui::MenuItem::action(
         "New Window",
         workspace::NewWindow,
@@ -4246,22 +4115,9 @@ mod tests {
 
         let mouse_position = point(px(250.), px(250.));
 
-        let event_modifiers = {
-            #[cfg(target_os = "macos")]
-            {
-                Modifiers {
-                    platform: true,
-                    ..Modifiers::default()
-                }
-            }
-
-            #[cfg(not(target_os = "macos"))]
-            {
-                Modifiers {
-                    control: true,
-                    ..Modifiers::default()
-                }
-            }
+        let event_modifiers = Modifiers {
+            platform: true,
+            ..Modifiers::default()
         };
 
         workspace
