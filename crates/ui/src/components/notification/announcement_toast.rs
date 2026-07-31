@@ -171,19 +171,12 @@ impl Component for AnnouncementToast {
                 .w_80()
                 .child(
                     AnnouncementToast::new()
-                        .heading("Introducing Parallel Agents")
-                        .description("Run multiple agent threads simultaneously across projects.")
-                        .bullet_item(ListBulletItem::new(
-                            "Mix and match Zed's agent with any ACP-compatible agent",
-                        ))
-                        .bullet_item(ListBulletItem::new(
-                            "Optional worktree isolation keeps agents from conflicting",
-                        ))
-                        .bullet_item(ListBulletItem::new(
-                            "Updated workspace layout designed for agentic workflows",
-                        ))
-                        .primary_action_label("Try Now")
-                        .secondary_action_label("Learn More"),
+                        .heading("Editor Update Available")
+                        .description("A new editor release is ready to install.")
+                        .bullet_item(ListBulletItem::new("Improved language support"))
+                        .bullet_item(ListBulletItem::new("Performance and stability fixes"))
+                        .primary_action_label("Install")
+                        .secondary_action_label("Release Notes"),
                 )
                 .into_any_element(),
         )];

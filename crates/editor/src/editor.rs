@@ -136,7 +136,7 @@ use display_map::*;
 use document_colors::LspColorData;
 use document_links::LspDocumentLinks;
 use editor_settings::{GoToDefinitionFallback, Minimap as MinimapSettings};
-use element::{LineWithInvisibles, PositionMap, layout_line};
+use element::{LineWithInvisibles, PositionMap};
 use futures::{
     FutureExt,
     future::{self, Shared},
@@ -144,15 +144,14 @@ use futures::{
 use fuzzy::{StringMatch, StringMatchCandidate};
 use git::blame::{GitBlame, GlobalBlameRenderer};
 use gpui::{
-    Action, Animation, AnimationExt, AnyElement, App, AppContext, AsyncWindowContext,
-    AvailableSpace, Background, Bounds, ClickEvent, ClipboardEntry, ClipboardItem, Context,
-    DispatchPhase, Edges, Entity, EntityId, EntityInputHandler, EventEmitter, FocusHandle,
-    FocusOutEvent, Focusable, FontId, FontStyle, FontWeight, Global, HighlightStyle, Hsla, IsZero,
-    KeyContext, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, PaintQuad, ParentElement,
-    Pixels, PressureStage, Render, ScrollHandle, SharedString, SharedUri, Size, Styled,
-    Subscription, Task, TextRun, TextStyle, TextStyleRefinement, UTF16Selection, UnderlineStyle,
-    UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window, div, point, prelude::*,
-    px, relative, size,
+    Action, AnyElement, App, AppContext, AsyncWindowContext, Background, Bounds, ClickEvent,
+    ClipboardEntry, ClipboardItem, Context, DispatchPhase, Entity, EntityId, EntityInputHandler,
+    EventEmitter, FocusHandle, FocusOutEvent, Focusable, FontId, FontStyle, FontWeight, Global,
+    HighlightStyle, Hsla, IsZero, KeyContext, Modifiers, MouseButton, MouseDownEvent,
+    MouseMoveEvent, PaintQuad, ParentElement, Pixels, PressureStage, Render, ScrollHandle,
+    SharedString, SharedUri, Size, Styled, Subscription, Task, TextRun, TextStyle,
+    TextStyleRefinement, UTF16Selection, UnderlineStyle, UniformListScrollHandle, WeakEntity,
+    WeakFocusHandle, Window, div, point, prelude::*, px, relative, size,
 };
 use hover_links::{HoverLink, HoveredLinkState, find_file};
 use hover_popover::{HoverState, hide_hover};
@@ -162,10 +161,10 @@ use itertools::{Either, Itertools};
 use language::{
     AutoindentMode, BlockCommentConfig, BracketMatch, BracketPair, Buffer, BufferRow,
     BufferSnapshot, Capability, CharClassifier, CharKind, CharScopeContext, CodeLabel, CursorShape,
-    DiagnosticEntryRef, DiffOptions, HighlightedText, IndentKind,
-    IndentSize, Language, LanguageAwareStyling, LanguageName, LanguageRegistry, LanguageScope,
-    LocalFile, OffsetRangeExt, OutlineItem, Point, Selection, SelectionGoal, TextObject,
-    TransactionId, TreeSitterOptions, WordsQuery,
+    DiagnosticEntryRef, DiffOptions, HighlightedText, IndentKind, IndentSize, Language,
+    LanguageAwareStyling, LanguageName, LanguageRegistry, LanguageScope, LocalFile, OffsetRangeExt,
+    OutlineItem, Point, Selection, SelectionGoal, TextObject, TransactionId, TreeSitterOptions,
+    WordsQuery,
     language_settings::{
         self, AllLanguageSettings, LanguageSettings, LspInsertMode, RewrapBehavior,
         WordsCompletionMode,
@@ -188,9 +187,9 @@ use parking_lot::Mutex;
 use persistence::EditorDb;
 use project::{
     BreakpointWithPosition, CodeAction, Completion, CompletionDisplayOptions, CompletionIntent,
-    CompletionResponse, CompletionSource, DocumentHighlight, InlayHint, InlayId,
-    InvalidationStrategy, Location, LocationLink, LspAction, PrepareRenameResponse, Project,
-    ProjectItem, ProjectPath, ProjectTransaction,
+    CompletionResponse, CompletionSource, DocumentHighlight, InlayHint, InvalidationStrategy,
+    Location, LocationLink, LspAction, PrepareRenameResponse, Project, ProjectItem, ProjectPath,
+    ProjectTransaction,
     bookmark_store::BookmarkStore,
     debugger::{
         breakpoint_store::{
@@ -240,8 +239,8 @@ use theme::{
 };
 use theme_settings::{ThemeSettings, observe_buffer_font_size_adjustment};
 use ui::{
-    Avatar, ContextMenu, Disclosure, IconButtonShape, Indicator, Key, KeyBinding, Tooltip,
-    prelude::*, scrollbars::ScrollbarAutoHide, tooltip_container, utils::WithRemSize,
+    Avatar, ContextMenu, Disclosure, IconButtonShape, Indicator, KeyBinding, Tooltip, prelude::*,
+    scrollbars::ScrollbarAutoHide, tooltip_container, utils::WithRemSize,
 };
 use ui_input::ErasedEditor;
 use util::{RangeExt, ResultExt, TryFutureExt, maybe, post_inc};
@@ -265,7 +264,7 @@ use crate::{
         inlay_hints::{LspInlayHintData, inlay_hint_settings},
     },
     runnables::{ResolvedTasks, RunnableData, RunnableTaskStatus, RunnableTasks},
-    scroll::{ScrollOffset, ScrollPixelOffset},
+    scroll::ScrollOffset,
     selections_collection::resolve_selections_wrapping_blocks,
     semantic_tokens::SemanticTokenState,
     signature_help::{SignatureHelpHiddenBy, SignatureHelpState},
@@ -919,8 +918,7 @@ pub struct Editor {
     /// usually use the existing available APIs as opposed to directly interacting
     /// with the scroll manager.
     pub scroll_manager: ScrollManager,
-    /// When inline assist editors are linked, they all render cursors because
-    /// typing enters text into each of them, even the ones that aren't focused.
+    /// Whether to render the cursor when this editor is not focused.
     pub(crate) show_cursor_when_unfocused: bool,
     columnar_selection_state: Option<ColumnarSelectionState>,
     add_selections_state: Option<AddSelectionsState>,
@@ -2599,11 +2597,7 @@ impl Editor {
         self.key_context_internal(window, cx)
     }
 
-    fn key_context_internal(
-        &self,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> KeyContext {
+    fn key_context_internal(&self, window: &mut Window, cx: &mut App) -> KeyContext {
         let mut key_context = KeyContext::new_with_defaults();
         key_context.add("Editor");
         let mode = match self.mode {
@@ -2654,7 +2648,7 @@ impl Editor {
             key_context.add("showing_signature_help");
         }
 
-        // Disable vim contexts when a sub-editor (e.g. rename/inline assistant) is focused.
+        // Disable vim contexts when a sub-editor such as rename is focused.
         if !self.focus_handle(cx).contains_focused(window, cx)
             || (self.is_focused(window) || self.mouse_menu_is_focused(window, cx))
         {
@@ -9423,8 +9417,7 @@ impl Editor {
                             let Some(anchor) = snapshot.anchor_in_excerpt(hint.position) else {
                                 continue;
                             };
-                            let inlay_id = editor.next_inlay_id;
-                            editor.next_inlay_id += 1;
+                            let inlay_id = post_inc(&mut editor.next_color_inlay_id);
                             let inlay = Inlay::debugger(inlay_id, anchor, hint.text());
                             if !inlay.text().chars().contains(&'\n') {
                                 new_inlays.push(inlay);
@@ -9586,7 +9579,6 @@ impl Editor {
                 }
                 jsx_tag_auto_close::refresh_enabled_in_any_buffer(self, multibuffer, cx);
                 cx.emit(EditorEvent::Reparsed(*buffer_id));
-                self.refresh_markdown_view_mode(cx);
                 cx.notify();
             }
             multi_buffer::Event::DirtyChanged => cx.emit(EditorEvent::DirtyChanged),

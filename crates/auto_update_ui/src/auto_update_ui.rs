@@ -1,6 +1,6 @@
 use auto_update::{AutoUpdater, release_notes_url};
 use editor::{Editor, MultiBuffer};
-use gpui::{App, DismissEvent, Entity, TaskExt, Window, actions, prelude::*};
+use gpui::{App, DismissEvent, Entity, SharedString, TaskExt, Window, actions, prelude::*};
 use markdown_preview::markdown_preview_view::{MarkdownPreviewMode, MarkdownPreviewView};
 use release_channel::{AppVersion, ReleaseChannel};
 use serde::Deserialize;
@@ -9,8 +9,7 @@ use util::{ResultExt as _, maybe};
 use workspace::{
     Workspace,
     notifications::{
-        NotificationId, show_app_notification,
-        simple_message_notification::MessageNotification,
+        NotificationId, show_app_notification, simple_message_notification::MessageNotification,
     },
     workspace_error::{ErrorAction, ErrorSeverity, WorkspaceError},
 };

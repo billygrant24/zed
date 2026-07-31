@@ -524,7 +524,6 @@ impl<T: 'static> Drop for PendingEntitySubscription<T> {
 pub struct TelemetrySettings {
     pub diagnostics: bool,
     pub metrics: bool,
-    pub anthropic_retention: bool,
 }
 
 impl settings::Settings for TelemetrySettings {
@@ -533,7 +532,6 @@ impl settings::Settings for TelemetrySettings {
         Self {
             diagnostics: telemetry.diagnostics.unwrap(),
             metrics: telemetry.metrics.unwrap(),
-            anthropic_retention: telemetry.anthropic_retention.unwrap(),
         }
     }
 }
@@ -1491,11 +1489,10 @@ impl Client {
             .clone()
             .ok_or_else(|| anyhow!("not authenticated"))?;
         let url = self.http.build_zed_cloud_url("/client/users/me")?;
-        let mut request = Request::get(url.as_str())
-            .header("Authorization", credentials.authorization_header());
+        let mut request =
+            Request::get(url.as_str()).header("Authorization", credentials.authorization_header());
         if let Some(system_id) = system_id {
-            request =
-                request.header(cloud_api_types::ZED_SYSTEM_ID_HEADER_NAME, system_id);
+            request = request.header(cloud_api_types::ZED_SYSTEM_ID_HEADER_NAME, system_id);
         }
         let mut response = self.http.send(request.body(AsyncBody::default())?).await?;
         anyhow::ensure!(

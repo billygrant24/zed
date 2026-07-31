@@ -64,7 +64,6 @@ pub mod worktree_picker;
 pub mod worktree_service;
 
 pub use blame_ui::GitBlameStatus;
-pub use conflict_view::MergeConflictIndicator;
 
 pub fn get_provider_icon(name: &str) -> IconName {
     match name {

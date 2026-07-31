@@ -1304,9 +1304,6 @@
     "diagnostics": true,
     // Send anonymized usage data like what languages you're using Zed with.
     "metrics": true,
-    // Allow sending requests to Anthropic models that cannot be offered with
-    // Zero Data Retention
-    "anthropic_retention": false,
   },
   // Automatically update Zed. This setting may be ignored on Linux if
   // installed through a package manager.
@@ -1803,7 +1800,7 @@
     "Shell Script": [".env.*"],
   },
   // Settings for which version of Node.js and NPM to use when installing
-  // language servers and Copilot.
+  // language servers.
   //
   // Note: changing this setting currently requires restarting Zed.
   "node": {

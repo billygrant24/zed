@@ -43,7 +43,7 @@ pub trait ProjectDelegate: Send + Sync + 'static {
 }
 
 pub trait KeyValueStoreDelegate: Send + Sync + 'static {
-    fn insert(&self, key: String, docs: String) -> Task<Result<()>>;
+    fn insert(&self, key: String, value: String) -> Task<Result<()>>;
 }
 
 #[async_trait]
@@ -116,40 +116,6 @@ pub trait Extension: Send + Sync + 'static {
         language_server_id: LanguageServerName,
         symbols: Vec<Symbol>,
     ) -> Result<Vec<Option<CodeLabel>>>;
-
-    async fn complete_slash_command_argument(
-        &self,
-        command: SlashCommand,
-        arguments: Vec<String>,
-    ) -> Result<Vec<SlashCommandArgumentCompletion>>;
-
-    async fn run_slash_command(
-        &self,
-        command: SlashCommand,
-        arguments: Vec<String>,
-        worktree: Option<Arc<dyn WorktreeDelegate>>,
-    ) -> Result<SlashCommandOutput>;
-
-    async fn context_server_command(
-        &self,
-        context_server_id: Arc<str>,
-        project: Arc<dyn ProjectDelegate>,
-    ) -> Result<Command>;
-
-    async fn context_server_configuration(
-        &self,
-        context_server_id: Arc<str>,
-        project: Arc<dyn ProjectDelegate>,
-    ) -> Result<Option<ContextServerConfiguration>>;
-
-    async fn suggest_docs_packages(&self, provider: Arc<str>) -> Result<Vec<String>>;
-
-    async fn index_docs(
-        &self,
-        provider: Arc<str>,
-        package_name: Arc<str>,
-        kv_store: Arc<dyn KeyValueStoreDelegate>,
-    ) -> Result<()>;
 
     async fn get_dap_binary(
         &self,

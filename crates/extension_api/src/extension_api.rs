@@ -16,9 +16,7 @@ pub use serde_json;
 // that we may want to shadow to provide a cleaner Rust API.
 pub use wit::{
     CodeLabel, CodeLabelSpan, CodeLabelSpanLiteral, Command, DownloadedFileType, EnvVars,
-    KeyValueStore, LanguageServerInstallationStatus, Project, Range, Worktree, download_file,
-    make_file_executable,
-    zed::extension::context_server::ContextServerConfiguration,
+    LanguageServerInstallationStatus, Range, Worktree, download_file, make_file_executable,
     zed::extension::dap::{
         AttachRequest, BuildTaskDefinition, BuildTaskDefinitionTemplatePayload, BuildTaskTemplate,
         DebugAdapterBinary, DebugConfig, DebugRequest, DebugScenario, DebugTaskDefinition,
@@ -34,9 +32,6 @@ pub use wit::{
         npm_package_latest_version,
     },
     zed::extension::platform::{Architecture, Os, current_platform},
-    zed::extension::slash_command::{
-        SlashCommand, SlashCommandArgumentCompletion, SlashCommandOutput, SlashCommandOutputSection,
-    },
 };
 
 // Undocumented WIT re-exports.
@@ -158,62 +153,6 @@ pub trait Extension: Send + Sync {
         _symbol: Symbol,
     ) -> Option<CodeLabel> {
         None
-    }
-
-    /// Returns the completions that should be shown when completing the provided slash command with the given query.
-    fn complete_slash_command_argument(
-        &self,
-        _command: SlashCommand,
-        _args: Vec<String>,
-    ) -> Result<Vec<SlashCommandArgumentCompletion>, String> {
-        Ok(Vec::new())
-    }
-
-    /// Returns the output from running the provided slash command.
-    fn run_slash_command(
-        &self,
-        _command: SlashCommand,
-        _args: Vec<String>,
-        _worktree: Option<&Worktree>,
-    ) -> Result<SlashCommandOutput, String> {
-        Err("`run_slash_command` not implemented".to_string())
-    }
-
-    /// Returns the command used to start a context server.
-    fn context_server_command(
-        &mut self,
-        _context_server_id: &ContextServerId,
-        _project: &Project,
-    ) -> Result<Command> {
-        Err("`context_server_command` not implemented".to_string())
-    }
-
-    /// Returns the configuration options for the specified context server.
-    fn context_server_configuration(
-        &mut self,
-        _context_server_id: &ContextServerId,
-        _project: &Project,
-    ) -> Result<Option<ContextServerConfiguration>> {
-        Ok(None)
-    }
-
-    /// Returns a list of package names as suggestions to be included in the
-    /// search results of the `/docs` slash command.
-    ///
-    /// This can be used to provide completions for known packages (e.g., from the
-    /// local project or a registry) before a package has been indexed.
-    fn suggest_docs_packages(&self, _provider: String) -> Result<Vec<String>, String> {
-        Ok(Vec::new())
-    }
-
-    /// Indexes the docs for the specified package.
-    fn index_docs(
-        &self,
-        _provider: String,
-        _package: String,
-        _database: &KeyValueStore,
-    ) -> Result<(), String> {
-        Err("`index_docs` not implemented".to_string())
     }
 
     /// Returns the debug adapter binary for the specified adapter name and configuration.
@@ -477,46 +416,44 @@ impl wit::Guest for Component {
     }
 
     fn complete_slash_command_argument(
-        command: SlashCommand,
-        args: Vec<String>,
+        _command: SlashCommand,
+        _args: Vec<String>,
     ) -> Result<Vec<SlashCommandArgumentCompletion>, String> {
-        extension().complete_slash_command_argument(command, args)
+        Err("slash commands are not supported by this editor".to_string())
     }
 
     fn run_slash_command(
-        command: SlashCommand,
-        args: Vec<String>,
-        worktree: Option<&Worktree>,
+        _command: SlashCommand,
+        _args: Vec<String>,
+        _worktree: Option<&Worktree>,
     ) -> Result<SlashCommandOutput, String> {
-        extension().run_slash_command(command, args, worktree)
+        Err("slash commands are not supported by this editor".to_string())
     }
 
     fn context_server_command(
-        context_server_id: String,
-        project: &Project,
+        _context_server_id: String,
+        _project: &Project,
     ) -> Result<wit::Command> {
-        let context_server_id = ContextServerId(context_server_id);
-        extension().context_server_command(&context_server_id, project)
+        Err("context servers are not supported by this editor".to_string())
     }
 
     fn context_server_configuration(
-        context_server_id: String,
-        project: &Project,
+        _context_server_id: String,
+        _project: &Project,
     ) -> Result<Option<ContextServerConfiguration>, String> {
-        let context_server_id = ContextServerId(context_server_id);
-        extension().context_server_configuration(&context_server_id, project)
+        Err("context servers are not supported by this editor".to_string())
     }
 
-    fn suggest_docs_packages(provider: String) -> Result<Vec<String>, String> {
-        extension().suggest_docs_packages(provider)
+    fn suggest_docs_packages(_provider: String) -> Result<Vec<String>, String> {
+        Err("indexed documentation providers are not supported by this editor".to_string())
     }
 
     fn index_docs(
-        provider: String,
-        package: String,
-        database: &KeyValueStore,
+        _provider: String,
+        _package: String,
+        _database: &KeyValueStore,
     ) -> Result<(), String> {
-        extension().index_docs(provider, package, database)
+        Err("indexed documentation providers are not supported by this editor".to_string())
     }
 
     fn get_dap_binary(
@@ -578,28 +515,6 @@ impl AsRef<str> for LanguageServerId {
 }
 
 impl fmt::Display for LanguageServerId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-/// The ID of a context server.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
-pub struct ContextServerId(String);
-
-impl ContextServerId {
-    pub fn new(value: String) -> Self {
-        Self(value)
-    }
-}
-
-impl AsRef<str> for ContextServerId {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl fmt::Display for ContextServerId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }

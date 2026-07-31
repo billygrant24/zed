@@ -373,16 +373,8 @@ enum ExtensionFeatureError {
     ThemesMixedWithOtherFeatures,
     #[error("extension must not provide other features along with icon themes")]
     IconThemesMixedWithOtherFeatures,
-    #[error(
-        "Slash commands have been deprecated and \
-        the slash command API will be removed in a future release. {}",
-        if *.sole_feature {
-            "Slash command extensions will no longer be accepted at this time."
-        } else {
-            "Please remove any slash-command related code from your extension."
-        }
-    )]
-    SlashCommandsDeprecated { sole_feature: bool },
+    #[error("AI and agent extension features are not supported by this editor")]
+    UnsupportedFeatures,
 }
 
 fn validate_extension_features(
@@ -402,10 +394,16 @@ fn validate_extension_features(
         return Err(ExtensionFeatureError::IconThemesMixedWithOtherFeatures);
     }
 
-    if provides.contains(&ExtensionProvides::SlashCommands) {
-        return Err(ExtensionFeatureError::SlashCommandsDeprecated {
-            sole_feature: provides_single_feature,
-        });
+    if provides.iter().any(|feature| {
+        matches!(
+            feature,
+            ExtensionProvides::ContextServers
+                | ExtensionProvides::AgentServers
+                | ExtensionProvides::SlashCommands
+                | ExtensionProvides::IndexedDocsProviders
+        )
+    }) {
+        return Err(ExtensionFeatureError::UnsupportedFeatures);
     }
 
     Ok(())
@@ -656,25 +654,23 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_slash_commands_only() {
+    fn test_validate_unsupported_feature_only() {
         let provides = BTreeSet::from([ExtensionProvides::SlashCommands]);
         assert_eq!(
             validate_extension_features(&provides),
-            Err(ExtensionFeatureError::SlashCommandsDeprecated { sole_feature: true }),
+            Err(ExtensionFeatureError::UnsupportedFeatures),
         );
     }
 
     #[test]
-    fn test_validate_slash_commands_with_other_features() {
+    fn test_validate_unsupported_feature_with_other_features() {
         let provides = BTreeSet::from([
             ExtensionProvides::SlashCommands,
             ExtensionProvides::Languages,
         ]);
         assert_eq!(
             validate_extension_features(&provides),
-            Err(ExtensionFeatureError::SlashCommandsDeprecated {
-                sole_feature: false
-            }),
+            Err(ExtensionFeatureError::UnsupportedFeatures),
         );
     }
 

@@ -20,7 +20,6 @@ pub enum VectorName {
     ProUserStamp,
     StudentStamp,
     ZedLogo,
-    ZedXCopilot,
 }
 
 impl VectorName {
@@ -154,14 +153,6 @@ impl Component for Vector {
                                 .into_any_element(),
                         ),
                     ],
-                ),
-                example_group_with_title(
-                    "Different Vectors",
-                    vec![single_example(
-                        "Zed X Copilot",
-                        Vector::square(VectorName::ZedXCopilot, rems_from_px(100.))
-                            .into_any_element(),
-                    )],
                 ),
             ])
             .into_any_element()

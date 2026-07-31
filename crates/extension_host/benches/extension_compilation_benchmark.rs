@@ -139,8 +139,6 @@ fn manifest() -> ExtensionManifest {
         language_servers: [("gleam".into(), LanguageServerManifestEntry::default())]
             .into_iter()
             .collect(),
-        context_servers: BTreeMap::default(),
-        slash_commands: BTreeMap::default(),
         snippets: None,
         capabilities: vec![ExtensionCapability::ProcessExec(
             extension::ProcessExecCapability {
@@ -150,7 +148,6 @@ fn manifest() -> ExtensionManifest {
         )],
         debug_adapters: Default::default(),
         debug_locators: Default::default(),
-        language_model_providers: BTreeMap::default(),
     }
 }
 

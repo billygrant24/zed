@@ -124,9 +124,6 @@ pub fn init(cx: &mut App) {
                         ExtensionCategoryFilter::LanguageServers => {
                             ExtensionProvides::LanguageServers
                         }
-                        ExtensionCategoryFilter::ContextServers => {
-                            ExtensionProvides::ContextServers
-                        }
                         ExtensionCategoryFilter::Snippets => ExtensionProvides::Snippets,
                         ExtensionCategoryFilter::DebugAdapters => ExtensionProvides::DebugAdapters,
                     });
@@ -291,19 +288,19 @@ pub fn init(cx: &mut App) {
     .detach();
 }
 
-fn extension_provides_label(provides: ExtensionProvides) -> &'static str {
+fn extension_provides_label(provides: ExtensionProvides) -> Option<&'static str> {
     match provides {
-        ExtensionProvides::Themes => "Themes",
-        ExtensionProvides::IconThemes => "Icon Themes",
-        ExtensionProvides::Languages => "Languages",
-        ExtensionProvides::Grammars => "Grammars",
-        ExtensionProvides::LanguageServers => "Language Servers",
-        ExtensionProvides::ContextServers => "MCP Servers",
-        ExtensionProvides::AgentServers => "Agent Servers",
-        ExtensionProvides::SlashCommands => "Slash Commands",
-        ExtensionProvides::IndexedDocsProviders => "Indexed Docs Providers",
-        ExtensionProvides::Snippets => "Snippets",
-        ExtensionProvides::DebugAdapters => "Debug Adapters",
+        ExtensionProvides::Themes => Some("Themes"),
+        ExtensionProvides::IconThemes => Some("Icon Themes"),
+        ExtensionProvides::Languages => Some("Languages"),
+        ExtensionProvides::Grammars => Some("Grammars"),
+        ExtensionProvides::LanguageServers => Some("Language Servers"),
+        ExtensionProvides::Snippets => Some("Snippets"),
+        ExtensionProvides::DebugAdapters => Some("Debug Adapters"),
+        ExtensionProvides::ContextServers
+        | ExtensionProvides::AgentServers
+        | ExtensionProvides::SlashCommands
+        | ExtensionProvides::IndexedDocsProviders => None,
     }
 }
 
@@ -769,18 +766,23 @@ impl ExtensionsPage {
                                 }),
                             )
                             .child(
-                                Button::new(extension_button_id(&extension.id, ExtensionOperation::Remove), "Uninstall")
-                                    .color(Color::Accent)
-                                    .disabled(matches!(status, ExtensionStatus::Removing))
-                                    .on_click({
-                                        let extension_id = extension.id.clone();
-                                        move |_, _, cx| {
-                                            ExtensionStore::global(cx).update(cx, |store, cx| {
-                                                store.uninstall_extension(extension_id.clone(), cx).detach_and_log_err(cx);
-                                            });
-                                        }
-                                    }),
-                            )
+                                Button::new(
+                                    extension_button_id(&extension.id, ExtensionOperation::Remove),
+                                    "Uninstall",
+                                )
+                                .color(Color::Accent)
+                                .disabled(matches!(status, ExtensionStatus::Removing))
+                                .on_click({
+                                    let extension_id = extension.id.clone();
+                                    move |_, _, cx| {
+                                        ExtensionStore::global(cx).update(cx, |store, cx| {
+                                            store
+                                                .uninstall_extension(extension_id.clone(), cx)
+                                                .detach_and_log_err(cx);
+                                        });
+                                    }
+                                }),
+                            ),
                     ),
             )
             .child(
@@ -884,17 +886,7 @@ impl ExtensionsPage {
                                             .provides
                                             .iter()
                                             .filter_map(|provides| {
-                                                match provides {
-                                                    ExtensionProvides::ContextServers
-                                                    | ExtensionProvides::AgentServers
-                                                    | ExtensionProvides::SlashCommands
-                                                    | ExtensionProvides::IndexedDocsProviders => {
-                                                        return None;
-                                                    }
-                                                    _ => {}
-                                                }
-
-                                                Some(Chip::new(extension_provides_label(*provides)))
+                                                extension_provides_label(*provides).map(Chip::new)
                                             })
                                             .collect::<Vec<_>>(),
                                     ),
@@ -1956,34 +1948,28 @@ impl Render for ExtensionsPage {
                                 this.change_provides_filter(None, cx);
                             })),
                     )
-                    .children(
-                        ExtensionProvides::iter()
-                            .filter(|provides| match provides {
-                                ExtensionProvides::AgentServers
-                                | ExtensionProvides::Grammars // grammars do not add anything of value to users currently
-                                | ExtensionProvides::IndexedDocsProviders
-                                | ExtensionProvides::SlashCommands => false,
-                                _ => true,
-                            })
-                            .map(|provides| {
-                                let label = extension_provides_label(provides);
-                                let button_id =
-                                    SharedString::from(format!("filter-category-{}", label));
+                    .children(ExtensionProvides::iter().filter_map(|provides| {
+                        let label = extension_provides_label(provides)?;
+                        if provides == ExtensionProvides::Grammars {
+                            return None;
+                        }
+                        let button_id = SharedString::from(format!("filter-category-{}", label));
 
-                                Button::new(button_id, label)
-                                    .style(if self.provides_filter == Some(provides) {
-                                        ButtonStyle::Filled
-                                    } else {
-                                        ButtonStyle::Subtle
+                        Some(
+                            Button::new(button_id, label)
+                                .style(if self.provides_filter == Some(provides) {
+                                    ButtonStyle::Filled
+                                } else {
+                                    ButtonStyle::Subtle
+                                })
+                                .toggle_state(self.provides_filter == Some(provides))
+                                .on_click({
+                                    cx.listener(move |this, _event, _, cx| {
+                                        this.change_provides_filter(Some(provides), cx);
                                     })
-                                    .toggle_state(self.provides_filter == Some(provides))
-                                    .on_click({
-                                        cx.listener(move |this, _event, _, cx| {
-                                            this.change_provides_filter(Some(provides), cx);
-                                        })
-                                    })
-                            }),
-                    ),
+                                }),
+                        )
+                    })),
             )
             .child(self.render_feature_upsells(cx))
             .child(v_flex().px_4().size_full().overflow_y_hidden().map(|this| {

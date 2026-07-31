@@ -1,10 +1,8 @@
 mod action;
-mod agent;
 mod editor;
 mod extension;
 mod fallible_options;
 mod language;
-mod language_model;
 pub mod merge_from;
 mod project;
 mod serde_helper;
@@ -14,12 +12,10 @@ mod title_bar;
 mod workspace;
 
 pub use action::{ActionName, ActionWithArguments, CommandAliasTarget};
-pub use agent::*;
 pub use editor::*;
 pub use extension::*;
 pub use fallible_options::*;
 pub use language::*;
-pub use language_model::*;
 pub use merge_from::MergeFrom as MergeFromTrait;
 pub use project::*;
 use serde::de::DeserializeOwned;
@@ -170,9 +166,6 @@ pub struct SettingsContent {
 
     pub preview_tabs: Option<PreviewTabsSettingsContent>,
 
-    pub agent: Option<AgentSettingsContent>,
-    pub agent_servers: Option<AllAgentServersSettings>,
-
     /// Configuration of audio in Zed.
     pub audio: Option<AudioSettingsContent>,
 
@@ -231,8 +224,6 @@ pub struct SettingsContent {
     pub log: Option<HashMap<String, String>>,
 
     pub line_indicator_format: Option<LineIndicatorFormat>,
-
-    pub language_models: Option<AllLanguageModelSettingsContent>,
 
     pub outline_panel: Option<OutlinePanelSettingsContent>,
 
@@ -554,11 +545,6 @@ pub struct TelemetrySettingsContent {
     ///
     /// Default: true
     pub metrics: Option<bool>,
-    /// Allow sending requests to Anthropic models that cannot be offered with
-    /// Zero Data Retention.
-    ///
-    /// Default: false
-    pub anthropic_retention: Option<bool>,
 }
 
 impl Default for TelemetrySettingsContent {
@@ -566,7 +552,6 @@ impl Default for TelemetrySettingsContent {
         Self {
             diagnostics: Some(true),
             metrics: Some(true),
-            anthropic_retention: Some(false),
         }
     }
 }
@@ -959,9 +944,6 @@ pub struct VimSettingsContent {
     pub custom_digraphs: Option<HashMap<String, Arc<str>>>,
     pub highlight_on_yank_duration: Option<u64>,
     pub cursor_shape: Option<CursorShapeSettings>,
-    /// When enabled, edit predictions are shown in Vim normal mode.
-    /// By default, edit predictions are only shown in insert and replace modes.
-    pub show_edit_predictions_in_normal_mode: Option<bool>,
 }
 
 #[derive(
@@ -1394,31 +1376,6 @@ impl<T> From<Vec<T>> for ExtendingVec<T> {
 impl<T: Clone> merge_from::MergeFrom for ExtendingVec<T> {
     fn merge_from(&mut self, other: &Self) {
         self.0.extend_from_slice(other.0.as_slice());
-    }
-}
-
-// A SaturatingBool in the settings can only ever be set to true,
-// later attempts to set it to false will be ignored.
-//
-// Used by `disable_ai`.
-#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
-pub struct SaturatingBool(pub bool);
-
-impl From<bool> for SaturatingBool {
-    fn from(value: bool) -> Self {
-        SaturatingBool(value)
-    }
-}
-
-impl From<SaturatingBool> for bool {
-    fn from(value: SaturatingBool) -> bool {
-        value.0
-    }
-}
-
-impl merge_from::MergeFrom for SaturatingBool {
-    fn merge_from(&mut self, other: &Self) {
-        self.0 |= other.0
     }
 }
 

@@ -765,7 +765,7 @@ mod tests {
             KeyBinding::new(
                 "tab",
                 Unbind("test_only::ActionAlpha".into()),
-                Some("Editor && edit_prediction"),
+                Some("Editor && narrow_mode"),
             ),
         ];
 
@@ -774,7 +774,7 @@ mod tests {
 
         let (result, pending) = keymap.bindings_for_input(
             &[Keystroke::parse("tab").unwrap()],
-            &[KeyContext::parse("Editor showing_completions edit_prediction").unwrap()],
+            &[KeyContext::parse("Editor showing_completions narrow_mode").unwrap()],
         );
 
         assert!(!pending);
@@ -789,7 +789,7 @@ mod tests {
             KeyBinding::new(
                 "tab",
                 Unbind("test_only::ActionAlpha".into()),
-                Some("Editor && edit_prediction"),
+                Some("Editor && narrow_mode"),
             ),
             KeyBinding::new("tab", ActionBeta {}, Some("Editor && showing_completions")),
         ];
@@ -813,7 +813,7 @@ mod tests {
     #[test]
     fn test_bindings_for_action_removes_binding_for_broader_targeted_unbind() {
         let bindings = [
-            KeyBinding::new("tab", ActionAlpha {}, Some("Editor && edit_prediction")),
+            KeyBinding::new("tab", ActionAlpha {}, Some("Editor && narrow_mode")),
             KeyBinding::new(
                 "tab",
                 Unbind("test_only::ActionAlpha".into()),
