@@ -156,6 +156,11 @@ then
 fi
 
 search_paths_quietly \
+    'title_bar::init\(cx\)' \
+    crates/zed/src/main.rs \
+    || fail "the macOS title bar is no longer initialized"
+
+search_paths_quietly \
     'compile_error!\("the focused editor desktop target supports macOS only"\)' \
     crates/gpui_platform/src/gpui_platform.rs \
     || fail "gpui_platform no longer rejects non-macOS desktop builds"

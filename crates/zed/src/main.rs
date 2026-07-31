@@ -609,6 +609,7 @@ fn main() {
         theme_selector::init(cx);
         settings_profile_selector::init(cx);
         language_tools::init(cx);
+        title_bar::init(cx);
         git_ui::init(cx);
         feedback::init(cx);
         markdown_preview::init(cx);
