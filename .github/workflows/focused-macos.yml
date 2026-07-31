@@ -20,7 +20,10 @@ jobs:
       - name: Check macOS editor
         run: cargo check --locked -p zed --tests
       - name: Validate bundled macOS keymaps
-        run: cargo test --locked -p zed test_bundled_macos_keymaps_reference_registered_actions
+        # The unoptimized Zed test image exceeds the ARM64 branch range for the
+        # older Apple linker on macos-14 runners. release-fast keeps the same
+        # assertions while producing a substantially smaller executable.
+        run: cargo test --locked --profile release-fast -p zed test_bundled_macos_keymaps_reference_registered_actions
       - name: Test GPUI
         run: cargo test --locked -p gpui --lib
       - name: Check remote server
