@@ -283,8 +283,6 @@ actions!(
         CloseProject,
         /// Opens the feedback dialog.
         Feedback,
-        /// Follows the next collaborator in the session.
-        FollowNextCollaborator,
         /// Moves the focused panel to the next position.
         MoveFocusedPanelToNextPosition,
         /// Creates a new file.
@@ -350,8 +348,6 @@ actions!(
         /// Clears all trusted worktrees, placing them in restricted mode on next open.
         /// Requires restart to take effect on already opened projects.
         ClearTrustedWorktrees,
-        /// Stops following a collaborator.
-        Unfollow,
         /// Restores the banner.
         RestoreBanner,
         /// Toggles expansion of the selected item.
@@ -5979,54 +5975,6 @@ impl Workspace {
         }
     }
 
-    pub fn follow_next_collaborator(
-        &mut self,
-        _: &FollowNextCollaborator,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let collaborators = self.project.read(cx).collaborators();
-        let next_leader_id = if let Some(leader_id) = self.leader_for_pane(&self.active_pane) {
-            let mut collaborators = collaborators.keys().copied();
-            for peer_id in collaborators.by_ref() {
-                if CollaboratorId::PeerId(peer_id) == leader_id {
-                    break;
-                }
-            }
-            collaborators.next().map(CollaboratorId::PeerId)
-        } else if let Some(last_leader_id) =
-            self.last_leaders_by_pane.get(&self.active_pane.downgrade())
-        {
-            match last_leader_id {
-                CollaboratorId::PeerId(peer_id) => {
-                    if collaborators.contains_key(peer_id) {
-                        Some(*last_leader_id)
-                    } else {
-                        None
-                    }
-                }
-                CollaboratorId::Agent => Some(CollaboratorId::Agent),
-            }
-        } else {
-            None
-        };
-
-        let pane = self.active_pane.clone();
-        let Some(leader_id) = next_leader_id.or_else(|| {
-            Some(CollaboratorId::PeerId(
-                collaborators.keys().copied().next()?,
-            ))
-        }) else {
-            return;
-        };
-        if self.unfollow_in_pane(&pane, window, cx) == Some(leader_id) {
-            return;
-        }
-        if let Some(task) = self.start_following(leader_id, window, cx) {
-            task.detach_and_log_err(cx)
-        }
-    }
-
     pub fn follow(
         &mut self,
         leader_id: impl Into<CollaboratorId>,
@@ -7425,16 +7373,11 @@ impl Workspace {
             .on_action(cx.listener(Self::save_all))
             .on_action(cx.listener(Self::send_keystrokes))
             .on_action(cx.listener(Self::add_folder_to_project))
-            .on_action(cx.listener(Self::follow_next_collaborator))
             .on_action(cx.listener(Self::activate_pane_at_index))
             .on_action(cx.listener(Self::move_item_to_pane_at_index))
             .on_action(cx.listener(Self::move_focused_panel_to_next_position))
             .on_action(cx.listener(Self::reopen_last_picker))
             .on_action(cx.listener(Self::toggle_theme_mode))
-            .on_action(cx.listener(|workspace, _: &Unfollow, window, cx| {
-                let pane = workspace.active_pane().clone();
-                workspace.unfollow_in_pane(&pane, window, cx);
-            }))
             .on_action(cx.listener(|workspace, action: &Save, window, cx| {
                 workspace
                     .save_active_item(action.save_intent.unwrap_or(SaveIntent::Save), window, cx)
@@ -9701,41 +9644,6 @@ pub async fn apply_restored_multiworkspace_state(
 }
 
 actions!(
-    collab,
-    [
-        /// Opens the channel notes for the current call.
-        ///
-        /// Use `collab_panel::OpenSelectedChannelNotes` to open the channel notes for the selected
-        /// channel in the collab panel.
-        ///
-        /// If you want to open a specific channel, use `zed::OpenZedUrl` with a channel notes URL -
-        /// can be copied via "Copy link to section" in the context menu of the channel notes
-        /// buffer. These URLs look like `https://zed.dev/channel/channel-name-CHANNEL_ID/notes`.
-        OpenChannelNotes,
-        /// Mutes your microphone.
-        Mute,
-        /// Deafens yourself (mute both microphone and speakers).
-        Deafen,
-        /// Leaves the current call.
-        LeaveCall,
-        /// Shares the current project with collaborators.
-        ShareProject,
-        /// Shares your screen with collaborators.
-        ScreenShare,
-        /// Copies the current room name and session id for debugging purposes.
-        CopyRoomId,
-    ]
-);
-
-/// Opens the channel notes for a specific channel by its ID.
-#[derive(Clone, PartialEq, Deserialize, JsonSchema, Action)]
-#[action(namespace = collab)]
-#[serde(deny_unknown_fields)]
-pub struct OpenChannelNotesById {
-    pub channel_id: u64,
-}
-
-actions!(
     zed,
     [
         /// Opens the Zed log file.
@@ -9936,12 +9844,6 @@ pub fn join_channel(
                     window.activate_window();
                 })
                 .ok();
-
-            if result.is_ok() {
-                cx.update(|cx| {
-                    cx.dispatch_action(&OpenChannelNotes);
-                });
-            }
 
             active_window = Some(window_handle);
         }

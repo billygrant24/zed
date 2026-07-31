@@ -5090,6 +5090,32 @@ mod tests {
         });
     }
 
+    #[gpui::test]
+    async fn test_bundled_macos_keymaps_reference_registered_actions(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        init_keymap_test(cx);
+        cx.update(|cx| {
+            let mut asset_paths = vec![
+                DEFAULT_KEYMAP_PATH,
+                VIM_KEYMAP_PATH,
+                SPECIFIC_OVERRIDES_KEYMAP_PATH,
+            ];
+            asset_paths.extend(
+                BaseKeymap::OPTIONS
+                    .iter()
+                    .filter_map(|(_, base_keymap)| base_keymap.asset_path()),
+            );
+            asset_paths.sort_unstable();
+            asset_paths.dedup();
+
+            for asset_path in asset_paths {
+                KeymapFile::load_asset(asset_path, None, cx)
+                    .unwrap_or_else(|error| panic!("{asset_path}: {error:#}"));
+            }
+        });
+    }
+
     /// Checks that action namespaces are the expected set. The purpose of this is to prevent typos
     /// and let you know when introducing a new namespace.
     #[gpui::test]
@@ -5130,16 +5156,12 @@ mod tests {
                 "action",
                 "activity_indicator",
                 "app_menu",
-                "auto_update",
                 "branch_picker",
                 "branches",
                 "buffer_search",
-                "channel_modal",
                 "cli",
-                "client",
-                "collab",
-                "collab_panel",
                 "command_palette",
+                "console",
                 "csv",
                 "debug_panel",
                 "debugger",

@@ -138,6 +138,23 @@ then
     fail "removed screen-sharing infrastructure has returned"
 fi
 
+if search_paths \
+    'assistant::|agent::|collab_panel::|channel_modal::|skill_creator::|workspace::(FollowNextCollaborator|Unfollow)|git::ReviewDiff|AcpThread|AgentPanel|CollabPanel|ChannelModal|SkillCreator|agent_diff' \
+    assets/keymaps/default-macos.json \
+    assets/keymaps/macos \
+    assets/keymaps/vim.json \
+    assets/keymaps/specific-overrides-macos.json
+then
+    fail "an excluded product action or context has returned to a bundled macOS keymap"
+fi
+
+if search_paths \
+    'action\(namespace = collab|^[[:space:]]*collab,[[:space:]]*$' \
+    crates/zed_actions crates/workspace crates/zed
+then
+    fail "a collaboration action namespace has returned"
+fi
+
 search_paths_quietly \
     'compile_error!\("the focused editor desktop target supports macOS only"\)' \
     crates/gpui_platform/src/gpui_platform.rs \

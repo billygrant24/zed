@@ -214,8 +214,6 @@
       "[ space": "vim::InsertEmptyLineAbove",
       "[ e": "editor::MoveLineUp",
       "] e": "editor::MoveLineDown",
-      "[ f": "workspace::FollowNextCollaborator",
-      "] f": "workspace::FollowNextCollaborator",
       "] }": ["vim::UnmatchedForward", { "char": "}" }],
       "[ {": ["vim::UnmatchedBackward", { "char": "{" }],
       "] )": ["vim::UnmatchedForward", { "char": ")" }],
@@ -1190,20 +1188,6 @@
       "enter": "notebook::EnterEditMode",
       "shift-enter": "notebook::RunAndAdvance",
       "ctrl-enter": "notebook::Run",
-    },
-  },
-  {
-    "context": "SkillCreator",
-    "bindings": {
-      "tab": "skill_creator::FocusNextField",
-      "shift-tab": "skill_creator::FocusPreviousField",
-    },
-  },
-  {
-    "context": "SkillCreator > Editor",
-    "bindings": {
-      "tab": "skill_creator::FocusNextField",
-      "shift-tab": "skill_creator::FocusPreviousField",
     },
   },
 ]

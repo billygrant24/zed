@@ -19,6 +19,8 @@ jobs:
         run: ./script/check-focused-product
       - name: Check macOS editor
         run: cargo check --locked -p zed --tests
+      - name: Validate bundled macOS keymaps
+        run: cargo test --locked -p zed test_bundled_macos_keymaps_reference_registered_actions
       - name: Test GPUI
         run: cargo test --locked -p gpui --lib
       - name: Check remote server
