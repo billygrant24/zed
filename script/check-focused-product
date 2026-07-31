@@ -9,6 +9,35 @@ fail() {
     exit 1
 }
 
+contains_text() {
+    local pattern="$1"
+    if command -v rg >/dev/null 2>&1; then
+        rg -q "$pattern"
+    else
+        grep -E -q "$pattern"
+    fi
+}
+
+search_paths() {
+    local pattern="$1"
+    shift
+    if command -v rg >/dev/null 2>&1; then
+        rg -n "$pattern" "$@"
+    else
+        grep -E -n -R -I "$pattern" "$@"
+    fi
+}
+
+search_paths_quietly() {
+    local pattern="$1"
+    shift
+    if command -v rg >/dev/null 2>&1; then
+        rg -q "$pattern" "$@"
+    else
+        grep -E -q -R -I "$pattern" "$@"
+    fi
+}
+
 removed_crates=(
     acp_thread acp_tools action_log agent agent_servers agent_settings agent_skills
     agent_ui ai_onboarding anthropic audio aws_http_client bedrock call channel
@@ -45,12 +74,12 @@ banned_packages=(
 )
 
 for package in "${banned_packages[@]}"; do
-    if rg -q "^${package} " <<<"$zed_tree"; then
+    if contains_text "^${package} " <<<"$zed_tree"; then
         fail "forbidden package is linked into the editor: $package"
     fi
 done
 
-if ! rg -q '^remote_server_download ' <<<"$zed_tree"; then
+if ! contains_text '^remote_server_download ' <<<"$zed_tree"; then
     fail "remote-server downloader is missing from the SSH/dev-container path"
 fi
 
@@ -80,21 +109,21 @@ do
     fi
 done
 
-if rg -n \
+if search_paths \
     'auto_update::init|auto_update_ui::init|agent_ui::init|collab_ui::init|call::init|(^|[^[:alnum:]_])channel::init' \
     crates/zed crates/title_bar crates/activity_indicator crates/zed_actions
 then
     fail "excluded product initialization has returned"
 fi
 
-if rg -n \
+if search_paths \
     'Check for Updates|ShowUpdateNotification|View Release Notes Locally' \
     crates/zed crates/title_bar crates/activity_indicator crates/zed_actions
 then
     fail "desktop self-update UI has returned"
 fi
 
-if rg -n \
+if search_paths \
     'gpui_(linux|windows|web)|windows_resources|features = \[[^]]*(wayland|x11)' \
     Cargo.toml crates/zed/Cargo.toml crates/cli/Cargo.toml \
     crates/gpui/Cargo.toml crates/gpui_platform/Cargo.toml
@@ -102,20 +131,19 @@ then
     fail "unsupported desktop platform dependency has returned"
 fi
 
-if rg -n \
+if search_paths \
     'screen-capture|screen_capture|ScreenCapture' \
-    crates/gpui crates/gpui_macos crates/gpui_platform crates/title_bar crates/zed \
-    --glob '*.{toml,rs}'
+    crates/gpui crates/gpui_macos crates/gpui_platform crates/title_bar crates/zed
 then
     fail "removed screen-sharing infrastructure has returned"
 fi
 
-rg -q \
+search_paths_quietly \
     'compile_error!\("the focused editor desktop target supports macOS only"\)' \
     crates/gpui_platform/src/gpui_platform.rs \
     || fail "gpui_platform no longer rejects non-macOS desktop builds"
 
-rg -q \
+search_paths_quietly \
     'compile_error!\("the focused editor desktop target supports macOS only"\)' \
     crates/zed/src/main.rs \
     || fail "the desktop binary no longer rejects non-macOS builds"
