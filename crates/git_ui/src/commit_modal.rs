@@ -153,7 +153,6 @@ impl CommitModal {
                 }
             }
             git_panel.set_modal_open(true, cx);
-            git_panel.load_local_committer(cx);
         });
 
         let dock = workspace.dock_at_position(git_panel.position(window, cx));
@@ -336,7 +335,6 @@ impl CommitModal {
             can_commit,
             tooltip,
             commit_label,
-            co_authors,
             active_repo,
             is_amend_pending,
             is_signoff_enabled,
@@ -344,7 +342,6 @@ impl CommitModal {
         ) = self.git_panel.update(cx, |git_panel, cx| {
             let (can_commit, tooltip) = git_panel.configure_commit_button(cx);
             let title = git_panel.commit_button_title();
-            let co_authors = git_panel.render_co_authors(cx);
             let active_repo = git_panel.active_repository.clone();
             let is_amend_pending = git_panel.amend_pending();
             let is_signoff_enabled = git_panel.signoff_enabled();
@@ -352,7 +349,6 @@ impl CommitModal {
                 can_commit,
                 tooltip,
                 title,
-                co_authors,
                 active_repo,
                 is_amend_pending,
                 is_signoff_enabled,
@@ -413,17 +409,12 @@ impl CommitModal {
             .flex_none()
             .justify_between()
             .child(
-                h_flex()
-                    .gap_1()
-                    .flex_shrink_1()
-                    .overflow_x_hidden()
-                    .child(
-                        h_flex()
-                            .flex_shrink_1()
-                            .overflow_x_hidden()
-                            .child(branch_picker),
-                    )
-                    .children(co_authors),
+                h_flex().gap_1().flex_shrink_1().overflow_x_hidden().child(
+                    h_flex()
+                        .flex_shrink_1()
+                        .overflow_x_hidden()
+                        .child(branch_picker),
+                ),
             )
             .child(
                 h_flex()

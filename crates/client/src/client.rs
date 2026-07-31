@@ -21,7 +21,7 @@ use futures::{
     future::BoxFuture,
     stream::BoxStream,
 };
-use gpui::{App, AsyncApp, Entity, Global, Task, TaskExt, WeakEntity, actions};
+use gpui::{App, AsyncApp, Entity, Global, Task, TaskExt, WeakEntity};
 use http_client::{AsyncBody, HttpClient, HttpClientWithUrl, http, read_proxy_from_env};
 use parking_lot::{Mutex, RwLock};
 use postage::watch;
@@ -81,18 +81,6 @@ pub static ZED_ALWAYS_ACTIVE: LazyLock<bool> =
 pub const INITIAL_RECONNECTION_DELAY: Duration = Duration::from_millis(500);
 pub const MAX_RECONNECTION_DELAY: Duration = Duration::from_secs(30);
 pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(20);
-
-actions!(
-    client,
-    [
-        /// Signs in to Zed account.
-        SignIn,
-        /// Signs out of Zed account.
-        SignOut,
-        /// Reconnects to the collaboration server.
-        Reconnect
-    ]
-);
 
 #[derive(Deserialize, RegisterSetting)]
 pub struct ClientSettings {
@@ -155,41 +143,6 @@ impl Settings for ProxySettings {
                 .map(ToOwned::to_owned),
         }
     }
-}
-
-pub fn init(client: &Arc<Client>, cx: &mut App) {
-    let client = Arc::downgrade(client);
-    cx.on_action({
-        let client = client.clone();
-        move |_: &SignIn, cx| {
-            if let Some(client) = client.upgrade() {
-                cx.spawn(async move |cx| client.sign_in_with_optional_connect(true, cx).await)
-                    .detach_and_log_err(cx);
-            }
-        }
-    })
-    .on_action({
-        let client = client.clone();
-        move |_: &SignOut, cx| {
-            if let Some(client) = client.upgrade() {
-                cx.spawn(async move |cx| {
-                    client.sign_out(cx).await;
-                })
-                .detach();
-            }
-        }
-    })
-    .on_action({
-        let client = client;
-        move |_: &Reconnect, cx| {
-            if let Some(client) = client.upgrade() {
-                cx.spawn(async move |cx| {
-                    client.reconnect(cx);
-                })
-                .detach();
-            }
-        }
-    });
 }
 
 struct GlobalClient(Arc<Client>);

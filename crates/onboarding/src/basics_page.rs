@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use client::{TelemetrySettings, UserStore};
+use client::TelemetrySettings;
 use fs::Fs;
-use gpui::{Action, App, Entity, IntoElement};
+use gpui::{Action, App, IntoElement};
 use project::project_settings::ProjectSettings;
 use settings::{BaseKeymap, Settings, update_settings_file};
 use theme::{Appearance, SystemAppearance, ThemeRegistry};
@@ -520,10 +520,7 @@ fn render_import_settings_section(tab_index: &mut isize, cx: &mut App) -> impl I
         .child(h_flex().gap_1().child(vscode).child(cursor))
 }
 
-pub(crate) fn render_basics_page(
-    _user_store: &Entity<UserStore>,
-    cx: &mut App,
-) -> impl IntoElement {
+pub(crate) fn render_basics_page(cx: &mut App) -> impl IntoElement {
     let mut tab_index = 0;
 
     v_flex()

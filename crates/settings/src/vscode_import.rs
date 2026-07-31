@@ -171,11 +171,8 @@ impl VsCodeSettings {
 
     pub fn settings_content(&self) -> SettingsContent {
         SettingsContent {
-            audio: None,
             auto_update: None,
             base_keymap: Some(BaseKeymapContent::VSCode),
-            calls: None,
-            collaboration_panel: None,
             credentials_url: None,
             debugger: None,
             diagnostics: None,
